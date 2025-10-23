@@ -4,6 +4,8 @@
  */
 package proyecto_parcial_1_vampire_wargame;
 
+import proyecto_parcial_1_vampire_wargame.Ventanas.Inicio;
+
 /**
  *
  * @author esteb
@@ -15,6 +17,9 @@ public class Proyecto_Parcial_1_Vampire_Wargame {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        Inicio inicio = new Inicio();
+        inicio.setVisible(true);
+        inicio.setLocationRelativeTo(null);
     }
     
 }

@@ -38,6 +38,7 @@ public class MenuPrincipal extends JFrame {
 
         gbc.gridwidth=1;
         JButton btnJugar = crearBoton("JUGAR", 400, 80);
+        btnJugar.addActionListener(e -> new Tablero().setVisible(true));
         gbc.gridx = 0;
         gbc.gridy = 1;
         panelPrincipal.add(btnJugar, gbc);

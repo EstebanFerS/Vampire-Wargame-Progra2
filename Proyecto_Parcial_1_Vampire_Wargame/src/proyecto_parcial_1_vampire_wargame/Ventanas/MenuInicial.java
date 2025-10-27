@@ -1,54 +1,53 @@
 package proyecto_parcial_1_vampire_wargame.Ventanas;
 
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Insets;
-import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
+import proyecto_parcial_1_vampire_wargame.Panel;
 import proyecto_parcial_1_vampire_wargame.Player;
-
 
 public class MenuInicial extends JFrame {
 
-    private List<Player> players = new ArrayList<>();
-    
-    public MenuInicial() {
-        setTitle("Vampire Wargame");
+    private List<Player> players;
+
+    public MenuInicial(List<Player> players) {
+        this.players = players;
+        setTitle("Vampire Wargame - Menú Principal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1300, 850);
         setLocationRelativeTo(null);
         setResizable(false);
         mostrarMenuInicial();
     }
+    
+    public MenuInicial() {
+        this(new ArrayList<>());
+    }
 
     private void mostrarMenuInicial() {
-        PanelFondo panelFondo = new PanelFondo();
-        panelFondo.setLayout(new GridBagLayout());
-        
+
+        JPanel panelPrincipal = new JPanel(new GridBagLayout());
+        panelPrincipal.setOpaque(false);
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(25, 25, 25, 25);
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 0;
 
-        JLabel titulo = new JLabel("VAMPIRE WARGAME");
-        titulo.setFont(new Font("Arial Black", Font.BOLD, 52));
-        titulo.setForeground(new Color(200, 0, 0));
+        JLabel lblTitulo = new JLabel("VAMPIRE WARGAME");
+        lblTitulo.setFont(new Font("Arial Black", Font.BOLD, 60));
+        lblTitulo.setForeground(new Color(230, 182, 50));
         gbc.gridy = 0;
-        panelFondo.add(titulo, gbc);
+        panelPrincipal.add(lblTitulo, gbc);
 
-        JButton btnLogin = crearBoton("LOGIN");
+        JButton btnLogin = crearBoton("INICIAR SESIÓN");
         btnLogin.addActionListener(e -> {
-            new IniciarSesion().setVisible(true);
+            new IniciarSesion(players).setVisible(true);
             this.dispose();
         });
         gbc.gridy = 1;
-        panelFondo.add(btnLogin, gbc);
+        panelPrincipal.add(btnLogin, gbc);
 
         JButton btnCrear = crearBoton("CREAR CUENTA");
         btnCrear.addActionListener(e -> {
@@ -56,12 +55,15 @@ public class MenuInicial extends JFrame {
             this.dispose();
         });
         gbc.gridy = 2;
-        panelFondo.add(btnCrear, gbc);
+        panelPrincipal.add(btnCrear, gbc);
 
-        JButton btnSalir = crearBoton("SALIR");
+        JButton btnSalir = crearBoton("SALIR DEL JUEGO");
         btnSalir.addActionListener(e -> System.exit(0));
         gbc.gridy = 3;
-        panelFondo.add(btnSalir, gbc);
+        panelPrincipal.add(btnSalir, gbc);
+
+        Panel panelFondo = new Panel("/Images/Fondo1.jpg");
+        panelFondo.add(panelPrincipal);
 
         setContentPane(panelFondo);
         revalidate();
@@ -70,34 +72,26 @@ public class MenuInicial extends JFrame {
 
     private JButton crearBoton(String texto) {
         JButton btn = new JButton(texto);
-        btn.setPreferredSize(new Dimension(250, 65));
-        btn.setFont(new Font("Arial", Font.BOLD, 20));
-        btn.setBackground(new Color(200, 0, 0));
+        btn.setPreferredSize(new Dimension(300, 75));
+        btn.setFont(new Font("Arial", Font.BOLD, 24));
+        btn.setBackground(new Color(82, 36, 36));
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(145, 38, 36));
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(82, 36, 36));
+            }
+        });
         return btn;
     }
 
-    private static class PanelFondo extends JPanel {
-        private Image fondo;
-
-        public PanelFondo() {
-            setBackground(Color.BLACK);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (fondo != null) {
-                g.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
-            }
-            g.setColor(new Color(0, 0, 0, 150));
-            g.fillRect(0, 0, getWidth(), getHeight());
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MenuInicial().setVisible(true));
-    }
 }

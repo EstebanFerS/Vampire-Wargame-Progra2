@@ -3,12 +3,160 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package proyecto_parcial_1_vampire_wargame.Ventanas;
+
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+import proyecto_parcial_1_vampire_wargame.Panel;
+import proyecto_parcial_1_vampire_wargame.Player;
 
 /**
  *
  * @author esteb
  */
-public class IniciarSesion extends JFrame{
-    
+public class IniciarSesion extends JFrame {
+
+    private List<Player> players;
+
+    public IniciarSesion(List<Player> players) {
+        this.players = players;
+        setTitle("Iniciar Sesión - Vampire Wargame");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(1300, 850);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        mostrarLogin();
+    }
+
+    private void mostrarLogin() {
+        JPanel panelPrincipal = new JPanel(new GridBagLayout());
+        panelPrincipal.setOpaque(false);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(15, 15, 15, 15);
+        gbc.anchor = GridBagConstraints.CENTER;
+
+        JLabel lblTitulo = new JLabel("INICIAR SESIÓN");
+        lblTitulo.setFont(new Font("Arial Black", Font.BOLD, 55));
+        lblTitulo.setForeground(new Color(230, 182, 50));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        panelPrincipal.add(lblTitulo, gbc);
+
+        JLabel lblUser = new JLabel("Usuario:");
+        lblUser.setForeground(Color.WHITE);
+        lblUser.setFont(new Font("Arial", Font.BOLD, 22));
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        panelPrincipal.add(lblUser, gbc);
+
+        JTextField txtUser = new JTextField(20);
+        txtUser.setBackground(new Color(40, 40, 60));
+        txtUser.setForeground(Color.WHITE);
+        txtUser.setFont(new Font("Arial", Font.PLAIN, 20));
+        gbc.gridx = 1;
+        panelPrincipal.add(txtUser, gbc);
+
+        JLabel lblPassword = new JLabel("Contraseña:");
+        lblPassword.setForeground(Color.WHITE);
+        lblPassword.setFont(new Font("Arial", Font.BOLD, 22));
+        gbc.gridy = 2;
+        gbc.gridx = 0;
+        panelPrincipal.add(lblPassword, gbc);
+
+        JPasswordField txtPassword = new JPasswordField(20);
+        txtPassword.setBackground(new Color(40, 40, 60));
+        txtPassword.setForeground(Color.WHITE);
+        txtPassword.setFont(new Font("Arial", Font.PLAIN, 20));
+        gbc.gridx = 1;
+        panelPrincipal.add(txtPassword, gbc);
+
+        JCheckBox chkMostrar = new JCheckBox("Mostrar contraseña");
+        chkMostrar.setOpaque(false);
+        chkMostrar.setForeground(Color.WHITE);
+        chkMostrar.setFont(new Font("Arial", Font.PLAIN, 18));
+        chkMostrar.addActionListener(e -> {
+            if (chkMostrar.isSelected()) {
+                txtPassword.setEchoChar((char) 0);
+            } else {
+                txtPassword.setEchoChar('•');
+            }
+        });
+
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        panelPrincipal.add(chkMostrar, gbc);
+
+        JPanel panelBotones = new JPanel(new GridLayout(2, 1, 0, 20));
+        panelBotones.setOpaque(false);
+
+        JButton btnIniciar = crearBoton("INICIAR SESIÓN");
+        JButton btnVolver = crearBoton("VOLVER");
+
+        panelBotones.add(btnIniciar);
+        panelBotones.add(btnVolver);
+
+        gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        panelPrincipal.add(panelBotones, gbc);
+
+        btnIniciar.addActionListener(e -> {
+            String user = txtUser.getText();
+            String pass = new String(txtPassword.getPassword());
+
+            boolean encontrado = false;
+            for (Player p : players) {
+                if (p.getUsername().equals(user) && p.getPassword().equals(pass)) {
+                    encontrado = true;
+                    break;
+                }
+            }
+
+            if (encontrado) {
+                JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
+                new MenuPrincipal().setVisible(true);
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnVolver.addActionListener(e -> {
+            new MenuInicial(players).setVisible(true);
+            this.dispose();
+        });
+
+        Panel panelFondo = new Panel("/Images/Fondo2.jpg");
+        panelFondo.add(panelPrincipal);
+        setContentPane(panelFondo);
+        revalidate();
+        repaint();
+    }
+
+    private JButton crearBoton(String texto) {
+        JButton btn = new JButton(texto);
+        btn.setPreferredSize(new Dimension(300, 65));
+        btn.setFont(new Font("Arial", Font.BOLD, 22));
+        btn.setBackground(new Color(82, 36, 36));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
+        
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(145, 38, 36));
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(82, 36, 36));
+            }
+        });
+        return btn;
+    }
 }

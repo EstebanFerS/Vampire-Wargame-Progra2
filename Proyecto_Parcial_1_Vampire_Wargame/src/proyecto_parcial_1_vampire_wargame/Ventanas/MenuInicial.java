@@ -9,20 +9,15 @@ import proyecto_parcial_1_vampire_wargame.Player;
 
 public class MenuInicial extends JFrame {
 
-    private List<Player> players;
+    private static List<Player> players = new ArrayList<>();
 
-    public MenuInicial(List<Player> players) {
-        this.players = players;
+    public MenuInicial() {
         setTitle("Vampire Wargame - Menú Principal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1300, 850);
         setLocationRelativeTo(null);
         setResizable(false);
         mostrarMenuInicial();
-    }
-    
-    public MenuInicial() {
-        this(new ArrayList<>());
     }
 
     private void mostrarMenuInicial() {
@@ -41,7 +36,7 @@ public class MenuInicial extends JFrame {
         gbc.gridy = 0;
         panelPrincipal.add(lblTitulo, gbc);
 
-        JButton btnLogin = crearBoton("INICIAR SESIÓN");
+        JButton btnLogin = crearBoton("INICIAR SESIÓN", 300, 75);
         btnLogin.addActionListener(e -> {
             new IniciarSesion(players).setVisible(true);
             this.dispose();
@@ -49,30 +44,29 @@ public class MenuInicial extends JFrame {
         gbc.gridy = 1;
         panelPrincipal.add(btnLogin, gbc);
 
-        JButton btnCrear = crearBoton("CREAR CUENTA");
+        JButton btnCrear = crearBoton("CREAR CUENTA", 300, 75);
         btnCrear.addActionListener(e -> {
-            new CrearPlayer(players).setVisible(true);
+            new CrearPlayer().setVisible(true);
             this.dispose();
         });
         gbc.gridy = 2;
         panelPrincipal.add(btnCrear, gbc);
 
-        JButton btnSalir = crearBoton("SALIR DEL JUEGO");
+        JButton btnSalir = crearBoton("SALIR DEL JUEGO", 300, 75);
         btnSalir.addActionListener(e -> System.exit(0));
         gbc.gridy = 3;
         panelPrincipal.add(btnSalir, gbc);
 
         Panel panelFondo = new Panel("/Images/Fondo1.jpg");
         panelFondo.add(panelPrincipal);
-
         setContentPane(panelFondo);
         revalidate();
         repaint();
     }
 
-    private JButton crearBoton(String texto) {
+    private JButton crearBoton(String texto, int ancho, int alto) {
         JButton btn = new JButton(texto);
-        btn.setPreferredSize(new Dimension(300, 75));
+        btn.setPreferredSize(new Dimension(ancho, alto));
         btn.setFont(new Font("Arial", Font.BOLD, 24));
         btn.setBackground(new Color(82, 36, 36));
         btn.setForeground(Color.WHITE);
@@ -94,4 +88,7 @@ public class MenuInicial extends JFrame {
         return btn;
     }
 
+    public static List<Player> getPlayers() {
+        return players;
+    }
 }

@@ -20,15 +20,12 @@ public class Inicio extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
 
-        JPanel panelPrincipal = new JPanel();
+        JPanel panelPrincipal = new JPanel(new GridBagLayout());
         panelPrincipal.setOpaque(false);
-        panelPrincipal.setLayout(new GridBagLayout());
-        panelPrincipal.setBackground(new Color(20, 20, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(20, 20, 20, 20);
         gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.NONE;
 
         JLabel lblTitulo = new JLabel("VAMPIRE WARGAME");
         lblTitulo.setFont(new Font("Arial Black", Font.BOLD, 60));
@@ -37,15 +34,7 @@ public class Inicio extends JFrame {
         gbc.gridy = 0;
         panelPrincipal.add(lblTitulo, gbc);
 
-        JButton btnIniciar = new JButton("INICIAR JUEGO");
-        btnIniciar.setPreferredSize(new Dimension(400, 100));
-        btnIniciar.setFont(new Font("Arial", Font.BOLD, 28));
-        btnIniciar.setBackground(new Color(82, 36, 36));
-        btnIniciar.setForeground(Color.WHITE);
-        btnIniciar.setFocusPainted(false);
-        btnIniciar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnIniciar.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
-
+        JButton btnIniciar = crearBoton("INICIAR JUEGO", 400, 100);
         btnIniciar.addActionListener(e -> {
             new MenuInicial().setVisible(true);
             this.dispose();
@@ -54,9 +43,35 @@ public class Inicio extends JFrame {
         gbc.gridy = 1;
         panelPrincipal.add(btnIniciar, gbc);
 
-
         Panel panelFondo = new Panel("/Images/Fondo2.jpg");
         panelFondo.add(panelPrincipal);
         setContentPane(panelFondo);
+        revalidate();
+        repaint();
+    }
+
+    private JButton crearBoton(String texto, int ancho, int alto) {
+        JButton btn = new JButton(texto);
+        btn.setPreferredSize(new Dimension(ancho, alto));
+        btn.setFont(new Font("Arial", Font.BOLD, 28));
+        btn.setBackground(new Color(82, 36, 36));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(145, 38, 36));
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(82, 36, 36));
+            }
+        });
+
+        return btn;
     }
 }

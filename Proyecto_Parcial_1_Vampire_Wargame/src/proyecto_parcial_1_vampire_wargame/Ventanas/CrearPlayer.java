@@ -2,16 +2,15 @@ package proyecto_parcial_1_vampire_wargame.Ventanas;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import proyecto_parcial_1_vampire_wargame.Panel;
 import proyecto_parcial_1_vampire_wargame.Player;
 
 public class CrearPlayer extends JFrame {
 
-    private List<Player> players;
+    // Siempre usamos la lista global de MenuInicial
+    private final java.util.List<Player> players = MenuInicial.getPlayers();
 
-    public CrearPlayer(List<Player> players) {
-        this.players = players;
+    public CrearPlayer() {
         setTitle("Crear Cuenta - Vampire Wargame");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1300, 850);
@@ -38,6 +37,7 @@ public class CrearPlayer extends JFrame {
         gbc.gridwidth = 2;
         panelPrincipal.add(lblTitulo, gbc);
 
+        // Usuario
         JLabel lblUser = new JLabel("Usuario:");
         lblUser.setForeground(Color.WHITE);
         lblUser.setFont(new Font("Arial", Font.BOLD, 22));
@@ -52,6 +52,7 @@ public class CrearPlayer extends JFrame {
         gbc.gridx = 1;
         panelPrincipal.add(txtUser, gbc);
 
+        // Contraseña
         gbc.gridx = 0;
         gbc.gridy = 2;
         JLabel lblPassword = new JLabel("Contraseña (mínimo 5 caracteres):");
@@ -66,10 +67,10 @@ public class CrearPlayer extends JFrame {
         txtPassword.setFont(new Font("Arial", Font.PLAIN, 20));
         panelPrincipal.add(txtPassword, gbc);
 
+        // Mostrar contraseña
         gbc.gridx = 1;
         gbc.gridy = 3;
         JCheckBox chkMostrar = new JCheckBox("Mostrar contraseña");
-        chkMostrar.setBackground(new Color(20, 20, 30, 0));
         chkMostrar.setOpaque(false);
         chkMostrar.setForeground(Color.WHITE);
         chkMostrar.setFont(new Font("Arial", Font.PLAIN, 18));
@@ -82,6 +83,7 @@ public class CrearPlayer extends JFrame {
         });
         panelPrincipal.add(chkMostrar, gbc);
 
+        // Información adicional
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
@@ -96,10 +98,11 @@ public class CrearPlayer extends JFrame {
         lblEj.setFont(new Font("Arial", Font.ITALIC, 17));
         panelPrincipal.add(lblEj, gbc);
 
+        // Botón Crear Cuenta
         gbc.gridy = 6;
         JButton btnCrear = crearBoton("CREAR CUENTA");
         btnCrear.addActionListener(e -> {
-            String user = txtUser.getText();
+            String user = txtUser.getText().trim();
             String password = new String(txtPassword.getPassword());
 
             if (!validarUsername(user)) {
@@ -110,7 +113,7 @@ public class CrearPlayer extends JFrame {
                 Player player = new Player(user, password);
                 players.add(player);
                 JOptionPane.showMessageDialog(this, "Cuenta creada exitosamente");
-                new MenuInicial(players).setVisible(true);
+                new MenuInicial().setVisible(true);
                 this.dispose();
             }
         });
@@ -119,14 +122,13 @@ public class CrearPlayer extends JFrame {
         gbc.gridy = 7;
         JButton btnVolver = crearBoton("VOLVER");
         btnVolver.addActionListener(e -> {
-            new MenuInicial(players).setVisible(true);
+            new MenuInicial().setVisible(true);
             this.dispose();
         });
         panelPrincipal.add(btnVolver, gbc);
 
         Panel panelFondo = new Panel("/Images/Fondo2.jpg");
         panelFondo.add(panelPrincipal);
-
         setContentPane(panelFondo);
         revalidate();
         repaint();

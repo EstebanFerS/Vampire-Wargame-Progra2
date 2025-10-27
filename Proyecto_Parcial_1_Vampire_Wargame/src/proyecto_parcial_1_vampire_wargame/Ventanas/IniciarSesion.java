@@ -77,14 +77,7 @@ public class IniciarSesion extends JFrame {
         chkMostrar.setOpaque(false);
         chkMostrar.setForeground(Color.WHITE);
         chkMostrar.setFont(new Font("Arial", Font.PLAIN, 18));
-        chkMostrar.addActionListener(e -> {
-            if (chkMostrar.isSelected()) {
-                txtPassword.setEchoChar((char) 0);
-            } else {
-                txtPassword.setEchoChar('•');
-            }
-        });
-
+        chkMostrar.addActionListener(e -> txtPassword.setEchoChar(chkMostrar.isSelected() ? (char)0 : '•'));
         gbc.gridx = 1;
         gbc.gridy = 3;
         panelPrincipal.add(chkMostrar, gbc);
@@ -92,8 +85,8 @@ public class IniciarSesion extends JFrame {
         JPanel panelBotones = new JPanel(new GridLayout(2, 1, 0, 20));
         panelBotones.setOpaque(false);
 
-        JButton btnIniciar = crearBoton("INICIAR SESIÓN");
-        JButton btnVolver = crearBoton("VOLVER");
+        JButton btnIniciar = crearBoton("INICIAR SESIÓN", 300, 65);
+        JButton btnVolver = crearBoton("VOLVER", 300, 65);
 
         panelBotones.add(btnIniciar);
         panelBotones.add(btnVolver);
@@ -107,17 +100,17 @@ public class IniciarSesion extends JFrame {
             String user = txtUser.getText();
             String pass = new String(txtPassword.getPassword());
 
-            boolean encontrado = false;
+            Player jugadorActual = null;
             for (Player p : players) {
                 if (p.getUsername().equals(user) && p.getPassword().equals(pass)) {
-                    encontrado = true;
+                    jugadorActual = p;
                     break;
                 }
             }
 
-            if (encontrado) {
+            if (jugadorActual != null) {
                 JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
-                new MenuPrincipal().setVisible(true);
+                new MenuPrincipal(jugadorActual).setVisible(true);
                 this.dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos", "Error", JOptionPane.ERROR_MESSAGE);
@@ -125,7 +118,7 @@ public class IniciarSesion extends JFrame {
         });
 
         btnVolver.addActionListener(e -> {
-            new MenuInicial(players).setVisible(true);
+            new MenuInicial().setVisible(true);
             this.dispose();
         });
 
@@ -136,9 +129,9 @@ public class IniciarSesion extends JFrame {
         repaint();
     }
 
-    private JButton crearBoton(String texto) {
+    private JButton crearBoton(String texto, int ancho, int alto) {
         JButton btn = new JButton(texto);
-        btn.setPreferredSize(new Dimension(300, 65));
+        btn.setPreferredSize(new Dimension(ancho, alto));
         btn.setFont(new Font("Arial", Font.BOLD, 22));
         btn.setBackground(new Color(82, 36, 36));
         btn.setForeground(Color.WHITE);
@@ -148,14 +141,9 @@ public class IniciarSesion extends JFrame {
         
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(145, 38, 36));
-            }
-
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(145, 38, 36)); }
             @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(82, 36, 36));
-            }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(82, 36, 36)); }
         });
         return btn;
     }

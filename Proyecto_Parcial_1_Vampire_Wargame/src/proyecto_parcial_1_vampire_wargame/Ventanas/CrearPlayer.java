@@ -7,7 +7,6 @@ import proyecto_parcial_1_vampire_wargame.Player;
 
 public class CrearPlayer extends JFrame {
 
-    // Siempre usamos la lista global de MenuInicial
     private final java.util.List<Player> players = MenuInicial.getPlayers();
 
     public CrearPlayer() {
@@ -37,7 +36,6 @@ public class CrearPlayer extends JFrame {
         gbc.gridwidth = 2;
         panelPrincipal.add(lblTitulo, gbc);
 
-        // Usuario
         JLabel lblUser = new JLabel("Usuario:");
         lblUser.setForeground(Color.WHITE);
         lblUser.setFont(new Font("Arial", Font.BOLD, 22));
@@ -52,7 +50,6 @@ public class CrearPlayer extends JFrame {
         gbc.gridx = 1;
         panelPrincipal.add(txtUser, gbc);
 
-        // Contraseña
         gbc.gridx = 0;
         gbc.gridy = 2;
         JLabel lblPassword = new JLabel("Contraseña (mínimo 5 caracteres):");
@@ -67,7 +64,6 @@ public class CrearPlayer extends JFrame {
         txtPassword.setFont(new Font("Arial", Font.PLAIN, 20));
         panelPrincipal.add(txtPassword, gbc);
 
-        // Mostrar contraseña
         gbc.gridx = 1;
         gbc.gridy = 3;
         JCheckBox chkMostrar = new JCheckBox("Mostrar contraseña");
@@ -83,7 +79,6 @@ public class CrearPlayer extends JFrame {
         });
         panelPrincipal.add(chkMostrar, gbc);
 
-        // Información adicional
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
@@ -98,7 +93,6 @@ public class CrearPlayer extends JFrame {
         lblEj.setFont(new Font("Arial", Font.ITALIC, 17));
         panelPrincipal.add(lblEj, gbc);
 
-        // Botón Crear Cuenta
         gbc.gridy = 6;
         JButton btnCrear = crearBoton("CREAR CUENTA");
         btnCrear.addActionListener(e -> {
@@ -113,7 +107,7 @@ public class CrearPlayer extends JFrame {
                 Player player = new Player(user, password);
                 players.add(player);
                 JOptionPane.showMessageDialog(this, "Cuenta creada exitosamente");
-                new MenuInicial().setVisible(true);
+                new MenuPrincipal(player).setVisible(true);
                 this.dispose();
             }
         });

@@ -8,6 +8,22 @@ package proyecto_parcial_1_vampire_wargame.Fichas;
  *
  * @author esteb
  */
-public class Zombie {
-    
+
+public class Zombie extends Pieza {
+
+    public Zombie(String color) {
+        super(color, 1, 1, 0);
+        this.nombre = "Zombie";
+    }
+
+    @Override
+    public String getTipo() {
+        return "Zombie";
+    }
+
+    public String ataqueOrdenado(Pieza objetivo) {
+        if (objetivo == null) return "No hay objetivo para que el zombie ataque.";
+        objetivo.recibirDanio(this.ataque);
+        return "Zombie ataca por orden de Muerte y le quita " + this.ataque + " al objetivo.";
+    }
 }

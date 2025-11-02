@@ -15,6 +15,7 @@ public abstract class Pieza {
     protected int ataque;
     protected int vida;
     protected int escudo;
+    protected int maxVida;
 
     public Pieza(String color, int ataque, int vida, int escudo) {
         this.color = color;
@@ -42,10 +43,50 @@ public abstract class Pieza {
     public boolean isVivo() {
         return vida > 0;
     }
-    
-    public void recibirDanio(int danio){
-        
+
+    public void recibirDanio(int danio) {
+        if (danio <= 0) {
+            return;
+        }
+
+        if (escudo > 0) {
+            int absorbido = Math.min(escudo, danio);
+            escudo -= absorbido;
+            danio -= absorbido;
+        }
+
+        if (danio > 0) {
+            vida -= danio;
+            if (vida < 0) {
+                vida = 0;
+            }
+        }
+    }
+
+    public void recibirDanioSinEscudo(int danio) {
+        if (danio <= 0) {
+            return;
+        }
+        vida -= danio;
+        if (vida < 0) {
+            vida = 0;
+        }
+    }
+
+    public void curar(int cantidad) {
+        if (cantidad <= 0) {
+            return;
+        }
+        vida += cantidad;
+        if (vida > maxVida) {
+            vida = maxVida;
+        }
     }
     
+    public abstract String getTipo();
+
+    public String toString() {
+        return nombre + " [" + color + "] (Vida: " + vida + "/" + maxVida + ", Escudo: " + escudo + ", Atq: " + ataque + ")";
+    }
 
 }

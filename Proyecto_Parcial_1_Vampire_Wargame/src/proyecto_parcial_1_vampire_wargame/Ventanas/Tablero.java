@@ -10,6 +10,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import proyecto_parcial_1_vampire_wargame.Panel;
+import proyecto_parcial_1_vampire_wargame.Fichas.Pieza;
+import proyecto_parcial_1_vampire_wargame.Fichas.Vampiro;
+import proyecto_parcial_1_vampire_wargame.Fichas.HombreLobo;
+import proyecto_parcial_1_vampire_wargame.Fichas.Muerte;
+import proyecto_parcial_1_vampire_wargame.Fichas.Zombie;
 
 public class Tablero extends JFrame {
 
@@ -21,11 +26,15 @@ public class Tablero extends JFrame {
         setResizable(false);
 
         Panel panelFondo = new Panel("/Images/Fondo3.jpg");
-
         panelFondo.setOpaque(false);
+        
+        JPanel contenedor = new JPanel(new BorderLayout());
+        contenedor.setOpaque(false);
 
         TableroPanel tableroPanel = new TableroPanel();
         panelFondo.add(tableroPanel, new GridBagConstraints());
+        
+        panelFondo.add(contenedor);
 
         setContentPane(panelFondo);
     }

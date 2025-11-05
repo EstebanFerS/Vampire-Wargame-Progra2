@@ -66,7 +66,11 @@ public abstract class Pieza {
 
     public void curar(int cantidad) {
         if (cantidad <= 0) return;
-        vida += cantidad; // ya no hay límite
+        vida += cantidad;
+    }
+    
+    public boolean moverDosCasillas() {
+        return false;
     }
     
     public abstract String getTipo();

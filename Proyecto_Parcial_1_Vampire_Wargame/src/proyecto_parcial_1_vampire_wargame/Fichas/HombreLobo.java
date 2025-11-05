@@ -15,7 +15,7 @@ public class HombreLobo extends Pieza{
     }
     
     public String getTipo(){
-        return "Hombre Lobo";
+        return "HombreLobo";
     }
     
     public String ataqueNormal(Pieza objetivo){

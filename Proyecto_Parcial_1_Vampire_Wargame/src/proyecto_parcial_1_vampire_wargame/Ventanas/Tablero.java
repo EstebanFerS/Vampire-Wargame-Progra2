@@ -18,11 +18,16 @@ import proyecto_parcial_1_vampire_wargame.Fichas.Vampiro;
 import proyecto_parcial_1_vampire_wargame.Fichas.HombreLobo;
 import proyecto_parcial_1_vampire_wargame.Fichas.Muerte;
 import proyecto_parcial_1_vampire_wargame.Fichas.Zombie;
+import proyecto_parcial_1_vampire_wargame.Player;
 import proyecto_parcial_1_vampire_wargame.Ruleta;
 
 public class Tablero extends JFrame {
+    private Player jugadorBlanco;
+    private Player jugadorNegro;
 
     public Tablero() {
+        this.jugadorBlanco = jugadorBlanco;
+        this.jugadorNegro = jugadorNegro;
         setTitle("Tablero Visual - Vampire Wargame");
         setSize(1300, 850);
         setLocationRelativeTo(null);

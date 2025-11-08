@@ -1,18 +1,14 @@
 package proyecto_parcial_1_vampire_wargame.Ventanas;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.*;
 import proyecto_parcial_1_vampire_wargame.Panel;
 import proyecto_parcial_1_vampire_wargame.Player;
 
 public class MenuInicial extends JFrame {
 
-    private static List<Player> players = new ArrayList<>();
-
     public MenuInicial() {
-        setTitle("Vampire Wargame - Menú Principal");
+        setTitle("Vampire Wargame - Menú Inicial");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1300, 850);
         setLocationRelativeTo(null);
@@ -38,7 +34,7 @@ public class MenuInicial extends JFrame {
 
         JButton btnLogin = crearBoton("INICIAR SESIÓN", 300, 75);
         btnLogin.addActionListener(e -> {
-            new IniciarSesion(players).setVisible(true);
+            new IniciarSesion().setVisible(true);
             this.dispose();
         });
         gbc.gridy = 1;
@@ -86,9 +82,5 @@ public class MenuInicial extends JFrame {
             }
         });
         return btn;
-    }
-
-    public static List<Player> getPlayers() {
-        return players;
     }
 }

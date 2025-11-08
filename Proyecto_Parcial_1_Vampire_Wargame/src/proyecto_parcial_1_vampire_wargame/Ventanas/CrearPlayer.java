@@ -4,10 +4,13 @@ import javax.swing.*;
 import java.awt.*;
 import proyecto_parcial_1_vampire_wargame.Panel;
 import proyecto_parcial_1_vampire_wargame.Player;
+import proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager;
 
+/**
+ *
+ * @author esteb
+ */
 public class CrearPlayer extends JFrame {
-
-    private final java.util.List<Player> players = MenuInicial.getPlayers();
 
     public CrearPlayer() {
         setTitle("Crear Cuenta - Vampire Wargame");
@@ -62,6 +65,7 @@ public class CrearPlayer extends JFrame {
         txtPassword.setBackground(new Color(40, 40, 60));
         txtPassword.setForeground(Color.WHITE);
         txtPassword.setFont(new Font("Arial", Font.PLAIN, 20));
+        txtPassword.setEchoChar('•'); // carácter de máscara por defecto
         panelPrincipal.add(txtPassword, gbc);
 
         gbc.gridx = 1;
@@ -105,7 +109,7 @@ public class CrearPlayer extends JFrame {
                 JOptionPane.showMessageDialog(this, "Contraseña: mínimo 5 caracteres y al menos un símbolo especial.\nEjemplo: Pass@123", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 Player player = new Player(user, password);
-                players.add(player);
+                Manager.getInstance().agregarPlayer(player); // <-- usar el Manager como fuente única
                 JOptionPane.showMessageDialog(this, "Cuenta creada exitosamente");
                 new MenuPrincipal(player).setVisible(true);
                 this.dispose();
@@ -128,12 +132,14 @@ public class CrearPlayer extends JFrame {
         repaint();
     }
 
+    // Validar que el username tenga longitud mínima y no exista un player activo con ese nombre
     private boolean validarUsername(String username) {
+        if (username == null) return false;
+        username = username.trim();
         if (username.isEmpty() || username.length() < 3) return false;
-        for (Player p : players) {
-            if (p.getUsername().equals(username)) return false;
-        }
-        return true;
+
+        // Usamos getPlayer: si retorna no-nulo significa que ya existe un player activo con ese username
+        return Manager.getInstance().getPlayer(username) == null;
     }
 
     private boolean validarPassword(String password) {
@@ -163,5 +169,4 @@ public class CrearPlayer extends JFrame {
         });
         return btn;
     }
-
 }

@@ -1,14 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package proyecto_parcial_1_vampire_wargame.Ventanas;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import proyecto_parcial_1_vampire_wargame.Panel;
 import proyecto_parcial_1_vampire_wargame.Player;
+import proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager;
 
 /**
  *
@@ -16,10 +12,7 @@ import proyecto_parcial_1_vampire_wargame.Player;
  */
 public class IniciarSesion extends JFrame {
 
-    private List<Player> players;
-
-    public IniciarSesion(List<Player> players) {
-        this.players = players;
+    public IniciarSesion() {
         setTitle("Iniciar Sesión - Vampire Wargame");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(1300, 850);
@@ -97,24 +90,30 @@ public class IniciarSesion extends JFrame {
         panelPrincipal.add(panelBotones, gbc);
 
         btnIniciar.addActionListener(e -> {
-            String user = txtUser.getText();
+            String user = txtUser.getText().trim();
             String pass = new String(txtPassword.getPassword());
 
-            Player jugadorActual = null;
-            for (Player p : players) {
-                if (p.getUsername().equals(user) && p.getPassword().equals(pass)) {
-                    jugadorActual = p;
-                    break;
-                }
+            if (user.isEmpty() || pass.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Ingrese usuario y contraseña.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
-            if (jugadorActual != null) {
-                JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
-                new MenuPrincipal(jugadorActual).setVisible(true);
-                this.dispose();
-            } else {
-                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos", "Error", JOptionPane.ERROR_MESSAGE);
+            // Manager es la fuente única de verdad
+            Player jugadorActual = Manager.getInstance().getPlayer(user);
+            if (jugadorActual == null) {
+                JOptionPane.showMessageDialog(this, "Usuario no existe o no está activo.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+
+            if (!jugadorActual.getPassword().equals(pass)) {
+                JOptionPane.showMessageDialog(this, "Contraseña incorrecta.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Login exitoso
+            JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
+            new MenuPrincipal(jugadorActual).setVisible(true);
+            this.dispose();
         });
 
         btnVolver.addActionListener(e -> {
@@ -138,7 +137,7 @@ public class IniciarSesion extends JFrame {
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
-        
+
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(145, 38, 36)); }

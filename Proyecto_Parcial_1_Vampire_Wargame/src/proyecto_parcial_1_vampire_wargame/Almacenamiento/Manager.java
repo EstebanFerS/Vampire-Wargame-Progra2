@@ -13,13 +13,21 @@ import proyecto_parcial_1_vampire_wargame.Player;
  * @author esteb
  */
 public class Manager implements Almacenamiento{
-
+    
+    private static Manager instance;
     private List<Player> players;
     private List<GameLog> logs;
 
     public Manager(){
         this.players = new ArrayList<>();
         this.logs = new ArrayList<>();
+    }
+    
+    public static Manager getInstance() {
+        if (instance == null) {
+            instance = new Manager();
+        }
+        return instance;
     }
     
     public boolean playerHabilitado(String username){
@@ -55,8 +63,13 @@ public class Manager implements Almacenamiento{
 
     @Override
     public void actualizarPlayer(Player player) {
-        
+    for (int i = 0; i < players.size(); i++) {
+        if (players.get(i).getUsername().equals(player.getUsername())) {
+            players.set(i, player);
+            return;
+        }
     }
+}
 
     @Override
     public void eliminarPlayer(String username) {

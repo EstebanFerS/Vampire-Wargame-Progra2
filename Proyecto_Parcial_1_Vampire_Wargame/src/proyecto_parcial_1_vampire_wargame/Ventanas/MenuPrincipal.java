@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import proyecto_parcial_1_vampire_wargame.Panel;
 import proyecto_parcial_1_vampire_wargame.Player;
+import proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager;
+import java.util.List;
+import java.util.ArrayList;
 
 public class MenuPrincipal extends JFrame {
 
@@ -36,16 +39,67 @@ public class MenuPrincipal extends JFrame {
         lblTitulo.setForeground(new Color(230, 182, 50));
         panelPrincipal.add(lblTitulo, gbc);
 
-        gbc.gridwidth=1;
+        gbc.gridwidth = 1;
         JButton btnJugar = crearBoton("JUGAR", 400, 80);
-        btnJugar.addActionListener(e -> new Tablero().setVisible(true));
+        btnJugar.addActionListener(e -> {
+            Manager m = Manager.getInstance();
+            List<Player> activos = m.getAllPlayers();
+
+            // excluir al jugador actual
+            List<Player> oponentes = new ArrayList<>();
+            for (Player p : activos) {
+                if (!p.getUsername().equals(playerActual.getUsername())) {
+                    oponentes.add(p);
+                }
+            }
+
+            // validar cantidad
+            if (oponentes.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "No hay oponentes activos.\nDebe haber al menos dos jugadores activos para iniciar una partida.",
+                        "Sin oponentes",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // construir lista de nombres
+            String[] opciones = new String[oponentes.size()];
+            for (int i = 0; i < oponentes.size(); i++) {
+                opciones[i] = oponentes.get(i).getUsername();
+            }
+
+            // diálogo para elegir oponente
+            String seleccionado = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Selecciona el oponente:",
+                    "Elegir Oponente",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]
+            );
+
+            if (seleccionado != null && !seleccionado.isEmpty()) {
+                Player rival = m.getPlayer(seleccionado);
+                if (rival == null) {
+                    JOptionPane.showMessageDialog(this,
+                            "El oponente ya no está activo.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                new Tablero(playerActual, rival).setVisible(true);
+                this.dispose();
+            }
+        });
         gbc.gridx = 0;
         gbc.gridy = 1;
         panelPrincipal.add(btnJugar, gbc);
 
         JButton btnPerfil = crearBoton("MI PERFIL", 400, 80);
         btnPerfil.addActionListener(e -> new MiPerfil().setVisible(true));
-        gbc.gridx=1;
+        gbc.gridx = 1;
         gbc.gridy = 1;
         panelPrincipal.add(btnPerfil, gbc);
 

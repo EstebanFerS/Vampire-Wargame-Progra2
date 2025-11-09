@@ -5,22 +5,26 @@
 package proyecto_parcial_1_vampire_wargame;
 
 /**
-*
-* @author esteb
-*/
-
+ *
+ * @author esteb
+ */
 import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
 
-public class Ruleta extends JPanel {
+public final class Ruleta extends JPanel {
 
     public interface ResultListener {
+
         void onResult(String ficha);
     }
 
-    private RuletaPanel ruletaPanel;
-    private JLabel lblResultado;
+    private final RuletaPanel ruletaPanel;
+    private final JLabel lblResultado;
+    private final JLabel lblSpins;
+    private final JLabel lblSelectedPiece;
+    private final JButton btnGirar;
+
     private javax.swing.Timer timer;
     private double angulo = 0;
     private double velocidad = 0;
@@ -31,11 +35,15 @@ public class Ruleta extends JPanel {
         "Hombre Lobo", "Muerte", "Vampiro"
     };
 
-    private Random random = new Random();
+    private final Random random = new Random();
     private ResultListener listener;
 
+    private int spinsAllowed = 1;
+    private int spinsUsed = 0;
+    private String selectedPieceLabel = null;
+
     public Ruleta() {
-        setLayout(new BorderLayout(4,4));
+        setLayout(new BorderLayout(6, 6));
         setOpaque(false);
 
         lblResultado = new JLabel("Presiona girar", SwingConstants.CENTER);
@@ -48,15 +56,96 @@ public class Ruleta extends JPanel {
         ruletaPanel.setPreferredSize(new Dimension(200, 200));
         add(ruletaPanel, BorderLayout.CENTER);
 
+        JPanel bottom = new JPanel(new GridBagLayout());
+        bottom.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 4, 4, 4);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        btnGirar = new JButton("GIRAR RULETA");
+        btnGirar.setPreferredSize(new Dimension(160, 36));
+        btnGirar.addActionListener(e -> attemptSpin());
+        bottom.add(btnGirar, gbc);
+
+        gbc.gridy++;
+        lblSpins = new JLabel("Giros: 0/0", SwingConstants.CENTER);
+        lblSpins.setForeground(Color.WHITE);
+        lblSpins.setFont(new Font("Arial", Font.PLAIN, 12));
+        bottom.add(lblSpins, gbc);
+
+        gbc.gridy++;
+        lblSelectedPiece = new JLabel("Ficha seleccionada: —", SwingConstants.CENTER);
+        lblSelectedPiece.setForeground(Color.WHITE);
+        lblSelectedPiece.setFont(new Font("Arial", Font.PLAIN, 12));
+        bottom.add(lblSelectedPiece, gbc);
+
+        add(bottom, BorderLayout.SOUTH);
+
         iniciarAnimacion();
+        actualizarLabels();
     }
 
     public void setResultListener(ResultListener l) {
         this.listener = l;
     }
 
-    public void girarAleatorio() {
-        if (girando) return;
+    public void setSpinsAllowed(int n) {
+        this.spinsAllowed = Math.max(1, n);
+        if (spinsUsed > spinsAllowed) {
+            spinsUsed = spinsAllowed;
+        }
+        actualizarLabels();
+    }
+
+    public void resetSpins() {
+        this.spinsUsed = 0;
+        this.selectedPieceLabel = null;
+        lblResultado.setText("Presiona girar");
+        lblSelectedPiece.setText("Ficha seleccionada: —");
+        actualizarLabels();
+        btnGirar.setEnabled(true);
+    }
+
+    public int getSpinsAllowed() {
+        return spinsAllowed;
+    }
+
+    public int getSpinsUsed() {
+        return spinsUsed;
+    }
+
+    public void enableSpinButton(boolean enable) {
+        btnGirar.setEnabled(enable && !girando);
+    }
+
+    public void girarProgramaticamente() {
+        attemptSpin();
+    }
+
+    public void setSelectedPieceLabel(String texto) {
+        this.selectedPieceLabel = texto;
+        lblSelectedPiece.setText("Ficha seleccionada: " + (texto == null ? "—" : texto));
+    }
+
+    private void attemptSpin() {
+        if (girando) {
+            return;
+        }
+        if (spinsUsed >= spinsAllowed) {
+            lblResultado.setText("No quedan giros");
+            btnGirar.setEnabled(false);
+            return;
+        }
+        spinsUsed++;
+        actualizarLabels();
+        girarAleatorio();
+    }
+
+    private void girarAleatorio() {
+        if (girando) {
+            return;
+        }
         girando = true;
         velocidad = 10 + random.nextDouble() * 10;
         lblResultado.setText("Girando...");
@@ -66,7 +155,9 @@ public class Ruleta extends JPanel {
         timer = new javax.swing.Timer(20, e -> {
             if (girando) {
                 angulo += velocidad;
-                if (angulo > 360) angulo -= 360;
+                if (angulo > 360) {
+                    angulo -= 360;
+                }
                 velocidad *= 0.98;
                 if (velocidad < 0.2) {
                     girando = false;
@@ -81,20 +172,36 @@ public class Ruleta extends JPanel {
 
     private void determinarResultado() {
         double anguloFlecha = (450 - angulo) % 360;
-        if (anguloFlecha < 0) anguloFlecha += 360;
+        if (anguloFlecha < 0) {
+            anguloFlecha += 360;
+        }
         double sectorAngle = 360.0 / fichas.length;
         int sector = (int) (anguloFlecha / sectorAngle);
-        sector = sector % fichas.length;
+        sector = (sector % fichas.length + fichas.length) % fichas.length;
         String ficha = fichas[sector];
         lblResultado.setText("Salió: " + ficha);
+        setSelectedPieceLabel(ficha);
 
         if (listener != null) {
             SwingUtilities.invokeLater(() -> listener.onResult(ficha));
         }
+
+        if (spinsUsed >= spinsAllowed) {
+            btnGirar.setEnabled(false);
+        } else {
+            btnGirar.setEnabled(true);
+        }
+    }
+
+    private void actualizarLabels() {
+        lblSpins.setText("Giros: " + spinsUsed + "/" + spinsAllowed);
+        lblSelectedPiece.setText("Ficha seleccionada: " + (selectedPieceLabel == null ? "—" : selectedPieceLabel));
     }
 
     private class RuletaPanel extends JPanel {
+
         private double angulo = 0;
+
         public void setAngulo(double a) {
             this.angulo = a;
             repaint();
@@ -121,7 +228,7 @@ public class Ruleta extends JPanel {
             Color[] colores = {
                 new Color(255, 150, 150),
                 new Color(100, 100, 100),
-                new Color(150,150,255)
+                new Color(150, 150, 255)
             };
 
             double sectorDeg = 360.0 / fichas.length;
@@ -145,12 +252,12 @@ public class Ruleta extends JPanel {
                 FontMetrics fm = g2.getFontMetrics();
                 int tw = fm.stringWidth(label);
                 g2.setColor(Color.WHITE);
-                g2.drawString(label, tx - tw/2, ty + fm.getAscent()/2 - 2);
+                g2.drawString(label, tx - tw / 2, ty + fm.getAscent() / 2 - 2);
                 startAngle += sectorDeg;
             }
 
             g2.setColor(Color.RED);
-            int[] px = {w/2 - 8, w/2 + 8, w/2};
+            int[] px = {w / 2 - 8, w / 2 + 8, w / 2};
             int[] py = {y - 8, y - 8, y + 8};
             g2.fillPolygon(px, py, 3);
 

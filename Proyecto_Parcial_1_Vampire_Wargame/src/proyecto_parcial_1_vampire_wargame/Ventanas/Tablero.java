@@ -3,15 +3,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package proyecto_parcial_1_vampire_wargame.Ventanas;
-/**
-* 
-* @author esteb
-*/
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.List;
 import proyecto_parcial_1_vampire_wargame.Panel;
 import proyecto_parcial_1_vampire_wargame.Fichas.Pieza;
 import proyecto_parcial_1_vampire_wargame.Fichas.Vampiro;
@@ -22,99 +20,66 @@ import proyecto_parcial_1_vampire_wargame.Player;
 import proyecto_parcial_1_vampire_wargame.Ruleta;
 
 public class Tablero extends JFrame {
+
     private Player jugadorBlanco;
     private Player jugadorNegro;
 
-    public Tablero() {
+    public Tablero(Player jugadorBlanco, Player jugadorNegro) {
         this.jugadorBlanco = jugadorBlanco;
         this.jugadorNegro = jugadorNegro;
+        initFrame();
+    }
+
+    private void initFrame() {
         setTitle("Tablero Visual - Vampire Wargame");
         setSize(1300, 850);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
 
-        Panel panelFondo = new Panel("/Images/Fondo3.jpg");
+        Panel panelFondo = new Panel("/Images/Fondo4.jpg");
         panelFondo.setOpaque(false);
 
         JPanel contenedor = new JPanel(new BorderLayout());
         contenedor.setOpaque(false);
 
-        TableroPanel tableroPanel = new TableroPanel();
+        TableroPanel tableroPanel = new TableroPanel(jugadorBlanco, jugadorNegro);
         contenedor.add(tableroPanel, BorderLayout.CENTER);
 
-        JPanel placeholderRuleta = new JPanel(new BorderLayout());
+        JPanel placeholderRuleta = tableroPanel.getRuletaPanel();
         placeholderRuleta.setOpaque(false);
-        placeholderRuleta.setPreferredSize(new Dimension(220, 0));
-
-        JPanel wrapperRuleta = new JPanel();
-        wrapperRuleta.setOpaque(false);
-        wrapperRuleta.setLayout(new BorderLayout());
-
-        Ruleta ruleta = new Ruleta();
-        ruleta.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-
-        ruleta.setResultListener(ficha -> {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(this, "Ruleta dijo: " + ficha, "Ruleta", JOptionPane.INFORMATION_MESSAGE);
-
-            });
-        });
-        wrapperRuleta.add(ruleta, BorderLayout.NORTH);
-
-        JButton btnGirar = new JButton("Girar ruleta");
-        btnGirar.addActionListener(ev -> ruleta.girarAleatorio());
-
-        JPanel topBox = new JPanel(new BorderLayout());
-        topBox.setOpaque(false);
-        topBox.add(ruleta, BorderLayout.NORTH);
-
-        JPanel botonBox = new JPanel();
-        botonBox.setOpaque(false);
-        botonBox.add(btnGirar);
-
-        wrapperRuleta.add(topBox, BorderLayout.NORTH);
-        wrapperRuleta.add(botonBox, BorderLayout.CENTER);
-
-        placeholderRuleta.add(wrapperRuleta, BorderLayout.NORTH);
+        placeholderRuleta.setPreferredSize(new Dimension(260, 0));
         contenedor.add(placeholderRuleta, BorderLayout.WEST);
 
         JPanel accionesPanel = new JPanel();
         accionesPanel.setOpaque(false);
-        accionesPanel.setPreferredSize(new Dimension(200, 0));
+        accionesPanel.setPreferredSize(new Dimension(220, 0));
         accionesPanel.setLayout(new GridBagLayout());
         tableroPanel.setAccionesPanel(accionesPanel);
         contenedor.add(accionesPanel, BorderLayout.EAST);
 
         panelFondo.add(contenedor, new GridBagConstraints());
-
         setContentPane(panelFondo);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Tablero().setVisible(true));
     }
 }
 
 class TableroPanel extends JPanel {
 
-    private int tamañoCelda = 110;
-    private int filas = 6;
-    private int columnas = 6;
+    private final int tamañoCelda = 110;
+    private final int filas = 6;
+    private final int columnas = 6;
 
-    private Image[][] fichas = new Image[filas][columnas];
-
-    private Image imgLobo;
-    private Image imgVampiro;
-    private Image imgMuerte;
-    private Image imgZombie;
+    private final Image[][] fichas = new Image[filas][columnas];
+    private Image imgLoboNegro, imgLoboBlanco, imgVampiroNegro, imgVampiroBlanco,
+            imgMuerteNegro, imgMuerteBlanco, imgZombieNegro, imgZombieBlanco;
 
     private int filaSeleccionada = -1;
     private int columnaSeleccionada = -1;
-    private java.util.List<Point> movimientosValidos = new ArrayList<>();
-    private java.util.List<Point> ataquesValidos = new ArrayList<>();
+    private final List<Point> movimientosValidos = new ArrayList<>();
+    private final List<Point> ataquesValidos = new ArrayList<>();
+    private final boolean[][] posiblesPostCaptura = new boolean[filas][columnas];
 
-    private Pieza[][] tableroLogico = new Pieza[filas][columnas];
+    private final Pieza[][] tableroLogico = new Pieza[filas][columnas];
 
     private JPanel accionesPanel;
 
@@ -124,32 +89,61 @@ class TableroPanel extends JPanel {
     private static final int LANZA = 3;
     private static final int CONJURAR_ZOMBIE = 4;
     private static final int MOVER_DOS = 5;
+    private static final int ORDER_ZOMBIES = 6;
 
     private int modoActual = NONE;
     private boolean modoMover2Activo = false;
 
-    public TableroPanel() {
+    private String turnoActual = "Blanco";
+    private final Player jugadorBlanco;
+    private final Player jugadorNegro;
+
+    private Ruleta ruleta;
+
+    private String selectedPieceType = null;
+    private String selectedPieceTypeKey = null;
+
+    private boolean gameOver = false;
+
+    public TableroPanel(Player jugadorBlanco, Player jugadorNegro) {
+        this.jugadorBlanco = jugadorBlanco;
+        this.jugadorNegro = jugadorNegro;
+
         setPreferredSize(new Dimension(columnas * tamañoCelda, filas * tamañoCelda));
         setOpaque(false);
 
-        imgLobo = cargarImagen("/Images/4.png");
-        imgVampiro = cargarImagen("/Images/3.png");
-        imgMuerte = cargarImagen("/Images/1.png");
-        imgZombie = cargarImagen("/Images/2.png");
+        cargarRecursos();
+        inicializarTableroLogicoYVisual();
+        configurarMouse();
+        crearPanelRuleta();
+        inicioTurno();
+    }
 
-        fichas[0][0] = imgLobo;
-        fichas[0][1] = imgVampiro;
-        fichas[0][2] = imgMuerte;
-        fichas[0][3] = imgMuerte;
-        fichas[0][4] = imgVampiro;
-        fichas[0][5] = imgLobo;
+    private void cargarRecursos() {
+        imgLoboNegro = cargarImagen("/Images/HombreLoboNegro.png");
+        imgLoboBlanco = cargarImagen("/Images/HombreLoboBlanco.png");
+        imgVampiroNegro = cargarImagen("/Images/VampiroNegro.png");
+        imgVampiroBlanco = cargarImagen("/Images/VampiroBlanco.png");
+        imgMuerteNegro = cargarImagen("/Images/MuerteNegro.png");
+        imgMuerteBlanco = cargarImagen("/Images/MuerteBlanco.png");
+        imgZombieNegro = cargarImagen("/Images/ZombieNegro.png");
+        imgZombieBlanco = cargarImagen("/Images/ZombieBlanco.png");
+    }
 
-        fichas[5][0] = imgLobo;
-        fichas[5][1] = imgVampiro;
-        fichas[5][2] = imgMuerte;
-        fichas[5][3] = imgMuerte;
-        fichas[5][4] = imgVampiro;
-        fichas[5][5] = imgLobo;
+    private void inicializarTableroLogicoYVisual() {
+        fichas[5][0] = imgLoboBlanco;
+        fichas[5][1] = imgVampiroBlanco;
+        fichas[5][2] = imgMuerteBlanco;
+        fichas[5][3] = imgMuerteBlanco;
+        fichas[5][4] = imgVampiroBlanco;
+        fichas[5][5] = imgLoboBlanco;
+
+        fichas[0][0] = imgLoboNegro;
+        fichas[0][1] = imgVampiroNegro;
+        fichas[0][2] = imgMuerteNegro;
+        fichas[0][3] = imgMuerteNegro;
+        fichas[0][4] = imgVampiroNegro;
+        fichas[0][5] = imgLoboNegro;
 
         tableroLogico[5][0] = new HombreLobo("Blanco");
         tableroLogico[5][1] = new Vampiro("Blanco");
@@ -164,7 +158,9 @@ class TableroPanel extends JPanel {
         tableroLogico[0][3] = new Muerte("Negro");
         tableroLogico[0][4] = new Vampiro("Negro");
         tableroLogico[0][5] = new HombreLobo("Negro");
+    }
 
+    private void configurarMouse() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -181,9 +177,168 @@ class TableroPanel extends JPanel {
         }
     }
 
+    private void crearPanelRuleta() {
+        ruleta = new Ruleta();
+        ruleta.setPreferredSize(new Dimension(220, 260));
+        ruleta.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        ruleta.setResultListener(ficha -> SwingUtilities.invokeLater(() -> manejarResultadoRuleta(ficha)));
+    }
+
+    public JPanel getRuletaPanel() {
+        return ruleta;
+    }
+
+    private void manejarResultadoRuleta(String ficha) {
+        if (gameOver) {
+            return;
+        }
+
+        String fichaKey = normalizarTipo(ficha);
+        int piezasDisponibles = contarPiezasTipo(turnoActual, fichaKey);
+
+        if (piezasDisponibles == 0) {
+            if (ruleta != null && ruleta.getSpinsUsed() == 1) {
+                showInfo("La ruleta salió '" + ficha + "' pero no tienes piezas de ese tipo.\nPuedes volver a girar una vez (aplica solo al primer giro).",
+                        "Ruleta - re-giro permitido");
+                ruleta.enableSpinButton(true);
+                ruleta.setSelectedPieceLabel(null);
+                return;
+            } else {
+                if (ruleta != null && ruleta.getSpinsUsed() < ruleta.getSpinsAllowed()) {
+                    ruleta.enableSpinButton(true);
+                    ruleta.setSelectedPieceLabel(null);
+                    showInfo("La ruleta salió '" + ficha + "' pero no tienes piezas de ese tipo.\nIntenta de nuevo.",
+                            "Ruleta - sin piezas");
+                    return;
+                } else {
+                    showInfo("La ruleta salió '" + ficha + "' y no obtuviste ninguna ficha válida.\nHas perdido el turno.",
+                            "Ruleta - turno perdido");
+                    ruleta.setSelectedPieceLabel(null);
+                    ruleta.enableSpinButton(false);
+                    cambiarTurno();
+                    return;
+                }
+            }
+        }
+
+        selectedPieceType = ficha;
+        selectedPieceTypeKey = fichaKey;
+        if (ruleta != null) {
+            ruleta.setSelectedPieceLabel(ficha);
+            if (ruleta.getSpinsUsed() >= 1) {
+                ruleta.enableSpinButton(false);
+            }
+        }
+
+        mostrarMensajeAcciones("Turno: " + turnoActual + ". Puedes mover solo fichas tipo: " + ficha + " (" + turnoActual + ").");
+    }
+
+    private void inicioTurno() {
+        int spinsAllowed = calcularSpinsPermitidos(turnoActual);
+        if (ruleta != null) {
+            ruleta.setSpinsAllowed(spinsAllowed);
+            ruleta.resetSpins();
+            ruleta.setSelectedPieceLabel(null);
+            ruleta.enableSpinButton(!gameOver);
+        }
+
+        movimientosValidos.clear();
+        ataquesValidos.clear();
+        resetPosiblesPostCaptura();
+        filaSeleccionada = -1;
+        columnaSeleccionada = -1;
+        selectedPieceType = null;
+        selectedPieceTypeKey = null;
+
+        mostrarMensajeAcciones("Turno: " + turnoActual + ". Debes girar la ruleta (" + spinsAllowed + " giro(s) permitido(s)) y seleccionar la ficha indicada.");
+        repaint();
+    }
+
+    private int calcularSpinsPermitidos(String color) {
+        final int inicial = 6;
+        int actuales = contarPiezas(color);
+        int perdidas = inicial - actuales;
+        if (perdidas >= 4) {
+            return 3;
+        }
+        if (perdidas >= 2) {
+            return 2;
+        }
+        return 1;
+    }
+
+    private int contarPiezas(String color) {
+        int cnt = 0;
+        for (int r = 0; r < filas; r++) {
+            for (int c = 0; c < columnas; c++) {
+                Pieza p = tableroLogico[r][c];
+                if (p != null && color.equals(p.getColor())) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
+    private int contarPiezasTipo(String color, String tipoKey) {
+        if (tipoKey == null) {
+            return 0;
+        }
+        int cnt = 0;
+        for (int r = 0; r < filas; r++) {
+            for (int c = 0; c < columnas; c++) {
+                Pieza p = tableroLogico[r][c];
+                if (p != null && color.equals(p.getColor()) && tipoKey.equals(normalizarTipo(p.getTipo()))) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
+    private void cambiarTurno() {
+        turnoActual = turnoActual.equals("Blanco") ? "Negro" : "Blanco";
+        inicioTurno();
+    }
+
     public void setAccionesPanel(JPanel panel) {
         this.accionesPanel = panel;
-        mostrarMensajeAcciones("Selecciona una ficha para ver sus habilidades.");
+        accionesPanel.removeAll();
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextArea area = new JTextArea("Selecciona una ficha para ver sus habilidades.");
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setOpaque(false);
+        area.setForeground(Color.WHITE);
+        area.setFont(new Font("Arial", Font.BOLD, 14));
+        area.setBorder(null);
+
+        accionesPanel.setLayout(new GridBagLayout());
+        accionesPanel.add(area, gbc);
+        gbc.gridy++;
+
+        JButton btnRendirse = new JButton("Rendirse");
+        btnRendirse.addActionListener(e -> {
+            if (gameOver) {
+                showInfo("La partida ya terminó.", "Rendirse");
+                return;
+            }
+            Player perdedor = turnoActual.equals("Blanco") ? jugadorBlanco : jugadorNegro;
+            Player ganador = turnoActual.equals("Blanco") ? jugadorNegro : jugadorBlanco;
+            handleVictory(ganador, perdedor, "rendición");
+        });
+        accionesPanel.add(btnRendirse, gbc);
+        gbc.gridy++;
+
+        accionesPanel.revalidate();
+        accionesPanel.repaint();
     }
 
     private void mostrarMensajeAcciones(String texto) {
@@ -209,11 +364,30 @@ class TableroPanel extends JPanel {
 
         accionesPanel.setLayout(new GridBagLayout());
         accionesPanel.add(area, gbc);
+        gbc.gridy++;
+
+        JButton btnRendirse = new JButton("Rendirse");
+        btnRendirse.addActionListener(e -> {
+            if (gameOver) {
+                showInfo("La partida ya terminó.", "Rendirse");
+                return;
+            }
+            Player perdedor = turnoActual.equals("Blanco") ? jugadorBlanco : jugadorNegro;
+            Player ganador = turnoActual.equals("Blanco") ? jugadorNegro : jugadorBlanco;
+            handleVictory(ganador, perdedor, "rendición");
+        });
+        accionesPanel.add(btnRendirse, gbc);
+        gbc.gridy++;
+
         accionesPanel.revalidate();
         accionesPanel.repaint();
     }
 
     private void manejarClick(MouseEvent e) {
+        if (gameOver) {
+            return;
+        }
+
         int tableroWidth = columnas * tamañoCelda;
         int tableroHeight = filas * tamañoCelda;
 
@@ -227,13 +401,37 @@ class TableroPanel extends JPanel {
             return;
         }
 
+        if (selectedPieceTypeKey == null) {
+            showInfo("Gira la ruleta para seleccionar el tipo de ficha que puedes mover.", "Turno");
+            return;
+        }
+
+        Pieza piezaEnCasilla = tableroLogico[fila][col];
+
+        if (modoActual == NONE) {
+            if (piezaEnCasilla != null) {
+                if (!turnoActual.equals(piezaEnCasilla.getColor())) {
+                    showInfo("No puedes seleccionar una ficha del oponente.", "Selección");
+                    return;
+                }
+                String tipoFichaEnTableroKey = normalizarTipo(piezaEnCasilla.getTipo());
+                if (!selectedPieceTypeKey.equals(tipoFichaEnTableroKey)) {
+                    showInfo("Solo puedes seleccionar fichas tipo: " + selectedPieceType, "Selección");
+                    return;
+                }
+            }
+        }
+
         if (modoActual != NONE) {
-            aplicarModoEnCasilla(modoActual, filaSeleccionada, columnaSeleccionada, fila, col);
+            boolean accionExitosa = aplicarModoEnCasilla(modoActual, filaSeleccionada, columnaSeleccionada, fila, col);
             modoActual = NONE;
             modoMover2Activo = false;
             movimientosValidos.clear();
             ataquesValidos.clear();
             repaint();
+            if (accionExitosa) {
+                cambiarTurno();
+            }
             return;
         }
 
@@ -245,6 +443,8 @@ class TableroPanel extends JPanel {
                 movimientosValidos.clear();
                 ataquesValidos.clear();
                 repaint();
+                chequearVictoria();
+                cambiarTurno();
                 return;
             }
         }
@@ -287,21 +487,36 @@ class TableroPanel extends JPanel {
             tableroLogico[filaDestino][colDestino] = tableroLogico[filaOrigen][colOrigen];
             tableroLogico[filaOrigen][colOrigen] = null;
         }
+        chequearVictoria();
     }
 
     private void calcularMovimientosValidos(int fila, int col) {
         movimientosValidos.clear();
         Pieza p = tableroLogico[fila][col];
-        int rango = (p != null && p.moverDosCasillas() && modoMover2Activo) ? 2 : 1;
-        for (int df = -rango; df <= rango; df++) {
-            for (int dc = -rango; dc <= rango; dc++) {
-                if (df == 0 && dc == 0) {
-                    continue;
-                }
-                int nf = fila + df;
-                int nc = col + dc;
-                if (nf >= 0 && nf < filas && nc >= 0 && nc < columnas && fichas[nf][nc] == null) {
+        boolean puedeMover2 = (p != null && p.moverDosCasillas() && modoMover2Activo);
+
+        if (puedeMover2) {
+            int[][] deltas2 = {
+                {-2, 0}, {2, 0}, {0, -2}, {0, 2},
+                {-2, -2}, {-2, 2}, {2, -2}, {2, 2}
+            };
+            for (int[] d : deltas2) {
+                int nf = fila + d[0], nc = col + d[1];
+                if (inBounds(nf, nc) && fichas[nf][nc] == null) {
                     movimientosValidos.add(new Point(nf, nc));
+                }
+            }
+        } else {
+            int rango = 1;
+            for (int df = -rango; df <= rango; df++) {
+                for (int dc = -rango; dc <= rango; dc++) {
+                    if (df == 0 && dc == 0) {
+                        continue;
+                    }
+                    int nf = fila + df, nc = col + dc;
+                    if (inBounds(nf, nc) && fichas[nf][nc] == null) {
+                        movimientosValidos.add(new Point(nf, nc));
+                    }
                 }
             }
         }
@@ -312,29 +527,38 @@ class TableroPanel extends JPanel {
         if (modo == NONE) {
             return;
         }
+        Pieza origen = tableroLogico[fila][col];
+        String colorOrigen = origen != null ? origen.getColor() : null;
+
         for (int df = -2; df <= 2; df++) {
             for (int dc = -2; dc <= 2; dc++) {
                 if (df == 0 && dc == 0) {
                     continue;
                 }
-                int nf = fila + df;
-                int nc = col + dc;
-                if (nf < 0 || nf >= filas || nc < 0 || nc >= columnas) {
+                int nf = fila + df, nc = col + dc;
+                if (!inBounds(nf, nc)) {
                     continue;
                 }
                 if (fichas[nf][nc] == null) {
                     continue;
                 }
-                int dr = Math.abs(df);
-                int dcAbs = Math.abs(dc);
+                Pieza objetivo = tableroLogico[nf][nc];
+                if (objetivo == null) {
+                    continue;
+                }
+                if (colorOrigen != null && colorOrigen.equals(objetivo.getColor())) {
+                    continue;
+                }
+
+                int dr = Math.abs(df), dcAbs = Math.abs(dc);
                 if (modo == ATACAR_NORMAL || modo == CHUPAR) {
                     if (dr <= 1 && dcAbs <= 1) {
                         ataquesValidos.add(new Point(nf, nc));
                     }
                 } else if (modo == LANZA) {
-                    boolean distancia1Recta = (dr == 1 && dcAbs == 0) || (dr == 0 && dcAbs == 1);
-                    boolean distancia2Recta = (dr == 2 && dcAbs == 0) || (dr == 0 && dcAbs == 2);
-                    if (distancia1Recta || distancia2Recta) {
+                    boolean d1 = (dr == 1 && dcAbs == 0) || (dr == 0 && dcAbs == 1);
+                    boolean d2 = (dr == 2 && dcAbs == 0) || (dr == 0 && dcAbs == 2);
+                    if (d1 || d2) {
                         ataquesValidos.add(new Point(nf, nc));
                     }
                 }
@@ -342,106 +566,324 @@ class TableroPanel extends JPanel {
         }
     }
 
-    private void aplicarModoEnCasilla(int modo, int origenFila, int origenCol, int destFila, int destCol) {
+    private boolean aplicarModoEnCasilla(int modo, int origenFila, int origenCol, int destFila, int destCol) {
+        if (gameOver) {
+            return false;
+        }
         if (origenFila < 0 || origenCol < 0) {
-            JOptionPane.showMessageDialog(this, "No hay pieza seleccionada para aplicar la accion.", "Accion", JOptionPane.WARNING_MESSAGE);
-            return;
+            showInfo("No hay pieza seleccionada para aplicar la accion.", "Accion");
+            return false;
         }
         Pieza origen = tableroLogico[origenFila][origenCol];
         if (origen == null) {
-            JOptionPane.showMessageDialog(this, "La pieza seleccionada no tiene logica (imposible aplicar).", "Accion", JOptionPane.WARNING_MESSAGE);
-            return;
+            showInfo("La pieza seleccionada no tiene logica (imposible aplicar).", "Accion");
+            return false;
+        }
+        if (!turnoActual.equals(origen.getColor())) {
+            showInfo("No es tu turno para usar esa ficha.", "Error");
+            return false;
         }
 
-        Pieza objetivo = tableroLogico[destFila][destCol];
-
+        Pieza objetivo = inBounds(destFila, destCol) ? tableroLogico[destFila][destCol] : null;
         switch (modo) {
             case ATACAR_NORMAL:
-                if (objetivo == null) {
-                    JOptionPane.showMessageDialog(this, "Selecciona una casilla con objetivo para atacar.", "Atacar", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                if (Math.abs(destFila - origenFila) <= 1 && Math.abs(destCol - origenCol) <= 1 && !(destFila == origenFila && destCol == origenCol)) {
-                    objetivo.recibirDanio(origen.getAtaque());
-                    JOptionPane.showMessageDialog(this, origen.getTipo() + " atacó a " + objetivo.getTipo() + ".", "Atacar", JOptionPane.INFORMATION_MESSAGE);
-                    chequearMuerteYQuitar(destFila, destCol);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Objetivo fuera de rango (debe ser adyacente).", "Atacar", JOptionPane.WARNING_MESSAGE);
-                }
-                break;
-
+                return handleAtacarNormal(origen, objetivo, origenFila, origenCol, destFila, destCol);
             case CHUPAR:
-                if (!(origen instanceof Vampiro)) {
-                    JOptionPane.showMessageDialog(this, "Solo Vampiro puede chupar sangre.", "Chupar", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (objetivo == null) {
-                    JOptionPane.showMessageDialog(this, "Selecciona una casilla con objetivo para chupar.", "Chupar", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                if (Math.abs(destFila - origenFila) <= 1 && Math.abs(destCol - origenCol) <= 1 && !(destFila == origenFila && destCol == origenCol)) {
-                    objetivo.recibirDanio(1);
-                    ((Vampiro) origen).chuparSangre(objetivo);
-                    JOptionPane.showMessageDialog(this, "Vampiro chupó sangre a " + objetivo.getTipo() + ".", "Chupar", JOptionPane.INFORMATION_MESSAGE);
-                    chequearMuerteYQuitar(destFila, destCol);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Objetivo fuera de rango (debe ser adyacente).", "Chupar", JOptionPane.WARNING_MESSAGE);
-                }
-                break;
-
+                return handleChupar(origen, objetivo, origenFila, origenCol, destFila, destCol);
             case LANZA:
-                if (!(origen instanceof Muerte)) {
-                    JOptionPane.showMessageDialog(this, "Solo Muerte puede lanzar lanza.", "Lanza", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (objetivo == null) {
-                    JOptionPane.showMessageDialog(this, "Selecciona una casilla con objetivo para la lanza.", "Lanza", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                int dr = Math.abs(destFila - origenFila);
-                int dc = Math.abs(destCol - origenCol);
-                boolean esDistancia1Recta = (dr == 1 && dc == 0) || (dr == 0 && dc == 1);
-                boolean esDistancia2Recta = (dr == 2 && dc == 0) || (dr == 0 && dc == 2);
-                if (esDistancia1Recta || esDistancia2Recta) {
-                    ((Muerte) origen).lanzarLanza(objetivo);
-                    JOptionPane.showMessageDialog(this, "Muerte lanzó lanza a " + objetivo.getTipo() + ".", "Lanza", JOptionPane.INFORMATION_MESSAGE);
-                    chequearMuerteYQuitar(destFila, destCol);
-                } else {
-                    JOptionPane.showMessageDialog(this, "La lanza alcanza 1 casilla adyacente o exactamente 2 casillas en línea recta.", "Lanza", JOptionPane.WARNING_MESSAGE);
-                }
-                break;
-
+                return handleLanza(origen, objetivo, origenFila, origenCol, destFila, destCol);
             case CONJURAR_ZOMBIE:
-                if (!(origen instanceof Muerte)) {
-                    JOptionPane.showMessageDialog(this, "Solo Muerte puede conjurar zombies.", "Conjurar", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (objetivo != null) {
-                    JOptionPane.showMessageDialog(this, "Selecciona una casilla vacía para colocar el zombie.", "Conjurar", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                Zombie z = ((Muerte) origen).conjurarZombie();
-                if (z == null) {
-                    JOptionPane.showMessageDialog(this, "No se pudo conjurar más zombies (límite alcanzado).", "Conjurar", JOptionPane.WARNING_MESSAGE);
-                } else {
-                    tableroLogico[destFila][destCol] = z;
-                    fichas[destFila][destCol] = imgZombie;
-                    JOptionPane.showMessageDialog(this, "Zombie conjurado y colocado.", "Conjurar", JOptionPane.INFORMATION_MESSAGE);
-                }
-                break;
-
+                return handleConjurar(origen, objetivo, destFila, destCol);
+            case ORDER_ZOMBIES:
+                return handleOrderZombies(origen, objetivo, destFila, destCol);
             default:
-                JOptionPane.showMessageDialog(this, "Modo no soportado.", "Acción", JOptionPane.WARNING_MESSAGE);
+                showInfo("Modo no soportado.", "Acción");
+                return false;
         }
     }
 
-    private void chequearMuerteYQuitar(int fila, int col) {
+    private boolean handleAtacarNormal(Pieza origen, Pieza objetivo, int of, int oc, int df, int dc) {
+        if (objetivo == null) {
+            showInfo("Selecciona una casilla con objetivo para atacar.", "Atacar");
+            return false;
+        }
+        if (origen.getColor().equals(objetivo.getColor())) {
+            showInfo("No puedes atacar a tus propias fichas.", "Atacar");
+            return false;
+        }
+        if (Math.abs(df - of) <= 1 && Math.abs(dc - oc) <= 1 && !(df == of && dc == oc)) {
+            objetivo.recibirDanio(origen.getAtaque());
+            showInfo(origen.getTipo() + " atacó a " + objetivo.getTipo() + ".", "Atacar");
+            boolean huboMuerte = chequearMuerteYQuitar(df, dc);
+            if (huboMuerte) {
+                actualizarPosiblesPostCaptura(turnoActual);
+            }
+            mostrarResumenAtaque(objetivo, df, dc);
+            chequearVictoria();
+            return true;
+        } else {
+            showInfo("Objetivo fuera de rango (debe ser adyacente).", "Atacar");
+            return false;
+        }
+    }
+
+    private boolean handleChupar(Pieza origen, Pieza objetivo, int of, int oc, int df, int dc) {
+        if (!(origen instanceof Vampiro)) {
+            showInfo("Solo Vampiro puede chupar sangre.", "Chupar");
+            return false;
+        }
+        if (objetivo == null) {
+            showInfo("Selecciona una casilla con objetivo para chupar.", "Chupar");
+            return false;
+        }
+        if (origen.getColor().equals(objetivo.getColor())) {
+            showInfo("No puedes chupar a tus propias fichas.", "Chupar");
+            return false;
+        }
+        if (Math.abs(df - of) <= 1 && Math.abs(dc - oc) <= 1 && !(df == of && dc == oc)) {
+            objetivo.recibirDanio(1);
+            ((Vampiro) origen).chuparSangre(objetivo);
+            showInfo("Vampiro chupó sangre a " + objetivo.getTipo() + ".", "Chupar");
+            boolean huboMuerte = chequearMuerteYQuitar(df, dc);
+            if (huboMuerte) {
+                actualizarPosiblesPostCaptura(turnoActual);
+            }
+            mostrarResumenAtaque(objetivo, df, dc);
+            chequearVictoria();
+            return true;
+        } else {
+            showInfo("Objetivo fuera de rango (debe ser adyacente).", "Chupar");
+            return false;
+        }
+    }
+
+    private boolean handleLanza(Pieza origen, Pieza objetivo, int of, int oc, int df, int dc) {
+        if (!(origen instanceof Muerte)) {
+            showInfo("Solo Muerte puede lanzar lanza.", "Lanza");
+            return false;
+        }
+        if (objetivo == null) {
+            showInfo("Selecciona una casilla con objetivo para la lanza.", "Lanza");
+            return false;
+        }
+        if (origen.getColor().equals(objetivo.getColor())) {
+            showInfo("No puedes lanzar la lanza a tus propias fichas.", "Lanza");
+            return false;
+        }
+
+        int dr = Math.abs(df - of), dcAbs = Math.abs(dc - oc);
+        boolean es1 = (dr == 1 && dcAbs == 0) || (dr == 0 && dcAbs == 1);
+        boolean es2 = (dr == 2 && dcAbs == 0) || (dr == 0 && dcAbs == 2);
+
+        if (es1 || es2) {
+            ((Muerte) origen).lanzarLanza(objetivo);
+            showInfo("Muerte lanzó lanza a " + objetivo.getTipo() + ".", "Lanza");
+            boolean huboMuerte = chequearMuerteYQuitar(df, dc);
+            if (huboMuerte) {
+                resetPosiblesPostCaptura();
+                actualizarPosiblesPostCaptura(turnoActual);
+            }
+            mostrarResumenAtaque(objetivo, df, dc);
+            chequearVictoryAfterAction();
+            return true;
+        } else {
+            showInfo("La lanza alcanza 1 casilla adyacente o exactamente 2 casillas en línea recta.", "Lanza");
+            return false;
+        }
+    }
+
+    private boolean handleConjurar(Pieza origen, Pieza objetivo, int df, int dc) {
+        if (!(origen instanceof Muerte)) {
+            showInfo("Solo Muerte puede conjurar zombies.", "Conjurar");
+            return false;
+        }
+        if (objetivo != null) {
+            showInfo("Selecciona una casilla vacía para colocar el zombie.", "Conjurar");
+            return false;
+        }
+        Zombie z = ((Muerte) origen).conjurarZombie();
+        if (z == null) {
+            showInfo("No se pudo conjurar más zombies (límite alcanzado).", "Conjurar");
+            return false;
+        }
+        tableroLogico[df][dc] = z;
+        fichas[df][dc] = origen.getColor().equals("Blanco") ? imgZombieBlanco : imgZombieNegro;
+        showInfo("Zombie conjurado y colocado.", "Conjurar");
+        actualizarPosiblesPostCaptura(turnoActual);
+        chequearVictoryAfterAction();
+        return true;
+    }
+
+    private boolean handleOrderZombies(Pieza origen, Pieza objetivo, int df, int dc) {
+        if (!(origen instanceof Muerte)) {
+            showInfo("Solo Muerte puede ordenar zombies.", "Ordenar Zombies");
+            return false;
+        }
+        if (objetivo == null) {
+            showInfo("Selecciona una pieza enemiga para que tus zombies la ataquen.", "Ordenar Zombies");
+            return false;
+        }
+        if (origen.getColor().equals(objetivo.getColor())) {
+            showInfo("No puedes ordenar a tus zombies atacar a tus propias fichas.", "Ordenar Zombies");
+            return false;
+        }
+        List<Point> zombiesAdj = getAdjacentZombiesOfColor(df, dc, origen.getColor());
+        if (zombiesAdj.isEmpty()) {
+            showInfo("No hay zombies aliados adyacentes a ese objetivo.", "Ordenar Zombies");
+            return false;
+        }
+        for (Point zpos : zombiesAdj) {
+            Pieza zz = tableroLogico[zpos.x][zpos.y];
+            if (zz instanceof Zombie) {
+                ((Zombie) zz).ataqueOrdenado(objetivo);
+            }
+        }
+        boolean huboMuerte2 = chequearMuerteYQuitar(df, dc);
+        mostrarResumenAtaque(objetivo, df, dc);
+        if (huboMuerte2) {
+            actualizarPosiblesPostCaptura(turnoActual);
+        }
+        chequearVictoryAfterAction();
+        return true;
+    }
+
+    private boolean chequearMuerteYQuitar(int fila, int col) {
         Pieza p = tableroLogico[fila][col];
         if (p != null && !p.isVivo()) {
             tableroLogico[fila][col] = null;
             fichas[fila][col] = null;
-            JOptionPane.showMessageDialog(this, p.getTipo() + " ha muerto y fue removido del tablero.", "Muerto", JOptionPane.INFORMATION_MESSAGE);
+            showInfo(p.getTipo() + " ha muerto y fue removido del tablero.", "Muerto");
+
+            movimientosValidos.clear();
+            ataquesValidos.clear();
+            resetPosiblesPostCaptura();
+            actualizarPosiblesPostCaptura(turnoActual);
+
+            if (filaSeleccionada == fila && columnaSeleccionada == col) {
+                filaSeleccionada = -1;
+                columnaSeleccionada = -1;
+            }
+
+            repaint();
+            return true;
         }
+        return false;
+    }
+
+    private void chequearVictoria() {
+        if (gameOver) {
+            return;
+        }
+
+        int blancas = contarPiezasRecursivoUp(0, 0, "Blanco");
+        int negras = contarPiezasRecursivoUp(0, 0, "Negro");
+
+        if (negras == 0 && blancas == 0) {
+            showInfo("Ambos jugadores se quedaron sin piezas. Empate.", "Resultado");
+            gameOver = true;
+            if (ruleta != null) {
+                ruleta.enableSpinButton(false);
+            }
+            return;
+        }
+        if (negras == 0) {
+            handleVictory(jugadorBlanco, jugadorNegro, "eliminación");
+        } else if (blancas == 0) {
+            handleVictory(jugadorNegro, jugadorBlanco, "eliminación");
+        }
+    }
+
+    private void chequearVictoryAfterAction() {
+        chequearVictoria();
+        if (gameOver && ruleta != null) {
+            ruleta.enableSpinButton(false);
+        }
+    }
+
+    private void handleVictory(Player ganador, Player perdedor, String motivo) {
+        if (gameOver) {
+            return;
+        }
+        gameOver = true;
+
+        String nombreGanador = ganador != null ? ganador.getUsername() : "Desconocido";
+        if (ganador != null) {
+            ganador.agregarPuntos(3);
+        }
+        if (perdedor != null) try {
+            perdedor.agregarPuntos(0);
+        } catch (Exception ignored) {
+        }
+
+        safeActualizarManager(ganador);
+        showInfo("Victoria de " + nombreGanador + " por " + motivo + ".\n\n" + nombreGanador + " recibió 3 puntos.", "Partida finalizada");
+
+        if (ruleta != null) {
+            ruleta.enableSpinButton(false);
+        }
+        mostrarMensajeAcciones("Partida terminada. Ganador: " + nombreGanador + ".");
+        closeThisFrameAndOpenMenu();
+    }
+
+    private void closeThisFrameAndOpenMenu() {
+        try {
+            Component root = SwingUtilities.getRoot(this);
+            if (root instanceof JFrame) {
+                ((JFrame) root).dispose();
+            }
+        } catch (Exception ex) {
+            System.err.println("No se pudo cerrar la ventana del tablero: " + ex.getMessage());
+        }
+
+        if (jugadorBlanco != null) {
+            try {
+                new proyecto_parcial_1_vampire_wargame.Ventanas.MenuPrincipal(jugadorBlanco).setVisible(true);
+            } catch (Exception ex) {
+                System.err.println("Error al abrir MenuPrincipal: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void safeActualizarManager(Player ganador) {
+        try {
+            proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager.getInstance().actualizarPlayer(ganador);
+        } catch (Exception ex) {
+            System.err.println("Warning: no se pudo actualizar Manager: " + ex.getMessage());
+        }
+    }
+
+    private void actualizarPosiblesPostCaptura(String color) {
+        resetPosiblesPostCaptura();
+        for (int r = 0; r < filas; r++) {
+            for (int c = 0; c < columnas; c++) {
+                Pieza pi = tableroLogico[r][c];
+                if (pi != null && color.equals(pi.getColor())) {
+                    for (int dr = -1; dr <= 1; dr++) {
+                        for (int dc = -1; dc <= 1; dc++) {
+                            if (dr == 0 && dc == 0) {
+                                continue;
+                            }
+                            int nr = r + dr, nc = c + dc;
+                            if (inBounds(nr, nc) && fichas[nr][nc] == null) {
+                                posiblesPostCaptura[nr][nc] = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void resetPosiblesPostCaptura() {
+        for (int r = 0; r < filas; r++) {
+            for (int c = 0; c < columnas; c++) {
+                posiblesPostCaptura[r][c] = false;
+            }
+        }
+    }
+
+    private boolean inBounds(int r, int c) {
+        return r >= 0 && r < filas && c >= 0 && c < columnas;
     }
 
     private void mostrarBotonesPara(Pieza pieza) {
@@ -474,7 +916,7 @@ class TableroPanel extends JPanel {
         btnAtq.addActionListener(e -> {
             modoActual = ATACAR_NORMAL;
             calcularAtaquesValidos(filaSeleccionada, columnaSeleccionada, modoActual);
-            JOptionPane.showMessageDialog(this, "Modo: Atacar activado. Haz click en el objetivo adyacente.", "Atacar", JOptionPane.INFORMATION_MESSAGE);
+            showInfo("Modo: Atacar activado. Haz click en el objetivo adyacente (solo enemigos).", "Atacar");
             repaint();
         });
         accionesPanel.add(btnAtq, gbc);
@@ -486,12 +928,12 @@ class TableroPanel extends JPanel {
             btnChupar.addActionListener(e -> {
                 modoActual = CHUPAR;
                 calcularAtaquesValidos(filaSeleccionada, columnaSeleccionada, modoActual);
-                JOptionPane.showMessageDialog(this, "Modo: Chupar activado. Haz click en el objetivo adyacente.", "Chupar", JOptionPane.INFORMATION_MESSAGE);
+                showInfo("Modo: Chupar activado. Haz click en el objetivo adyacente (solo enemigos).", "Chupar");
                 repaint();
             });
             accionesPanel.add(btnChupar, gbc);
             gbc.gridy++;
-        } else if ("HombreLobo".equals(tipo)) {
+        } else if ("HombreLobo".equals(tipo) || "Hombre Lobo".equals(tipo) || "Hombrelobo".equals(tipo)) {
             JButton btnMover2 = new JButton(modoMover2Activo ? "Mover 2 (ON)" : "Mover 2 (OFF)");
             btnMover2.addActionListener(e -> {
                 modoMover2Activo = !modoMover2Activo;
@@ -499,17 +941,17 @@ class TableroPanel extends JPanel {
                 if (filaSeleccionada != -1 && columnaSeleccionada != -1) {
                     calcularMovimientosValidos(filaSeleccionada, columnaSeleccionada);
                 }
-                JOptionPane.showMessageDialog(this, "Modo Mover 2 " + (modoMover2Activo ? "activado" : "desactivado") + ". Haz click en destino vacío.", "Mover 2", JOptionPane.INFORMATION_MESSAGE);
+                showInfo("Modo Mover 2 " + (modoMover2Activo ? "activado" : "desactivado") + ". Haz click en destino vacío.", "Mover 2");
                 repaint();
             });
             accionesPanel.add(btnMover2, gbc);
             gbc.gridy++;
-        } else if ("Muerte".equals(tipo)) {
+        } else if ("Muerte".equals(tipo) || "Death".equals(tipo)) {
             JButton btnLanza = new JButton("Lanzar lanza");
             btnLanza.addActionListener(e -> {
                 modoActual = LANZA;
                 calcularAtaquesValidos(filaSeleccionada, columnaSeleccionada, modoActual);
-                JOptionPane.showMessageDialog(this, "Modo: Lanza activado. Haz click en objetivo a 1 o 2 casillas en línea recta.", "Lanza", JOptionPane.INFORMATION_MESSAGE);
+                showInfo("Modo: Lanza activado. Haz click en objetivo a 1 o 2 casillas en línea recta (solo enemigos).", "Lanza");
                 repaint();
             });
             accionesPanel.add(btnLanza, gbc);
@@ -518,13 +960,31 @@ class TableroPanel extends JPanel {
             JButton btnConj = new JButton("Conjurar Zombie");
             btnConj.addActionListener(e -> {
                 modoActual = CONJURAR_ZOMBIE;
-                JOptionPane.showMessageDialog(this, "Modo: Conjurar activado. Haz click en casilla vacía para colocar zombie.", "Conjurar", JOptionPane.INFORMATION_MESSAGE);
+                showInfo("Modo: Conjurar activado. Haz click en casilla vacía para colocar zombie.", "Conjurar");
             });
             accionesPanel.add(btnConj, gbc);
             gbc.gridy++;
+
+            JButton btnOrdenarZombies = new JButton("Ordenar Zombies");
+            btnOrdenarZombies.addActionListener(e -> {
+                modoActual = ORDER_ZOMBIES;
+                ataquesValidos.clear();
+                String colorOrigen = pieza.getColor();
+                List<Point> posibles = computeTargetsForZombieOrder(colorOrigen);
+                if (posibles.isEmpty()) {
+                    showInfo("No hay objetivos adyacentes a tus zombies para ordenarles atacar.", "Ordenar Zombies");
+                    modoActual = NONE;
+                    return;
+                }
+                ataquesValidos.addAll(posibles);
+                showInfo("Modo: Ordenar Zombies activado. Haz click en una pieza enemiga que tenga zombies aliados adyacentes.", "Ordenar Zombies");
+                repaint();
+            });
+            accionesPanel.add(btnOrdenarZombies, gbc);
+            gbc.gridy++;
         } else if ("Zombie".equals(tipo)) {
             JButton btnInfo = new JButton("Info Zombie");
-            btnInfo.addActionListener(e -> JOptionPane.showMessageDialog(this, "Zombie: vida 1. Solo ataca por orden de Muerte.", "Zombie", JOptionPane.INFORMATION_MESSAGE));
+            btnInfo.addActionListener(e -> showInfo("Zombie: vida 1. Solo ataca por orden de Muerte.", "Zombie"));
             accionesPanel.add(btnInfo, gbc);
             gbc.gridy++;
         }
@@ -538,10 +998,23 @@ class TableroPanel extends JPanel {
             if (filaSeleccionada != -1) {
                 calcularMovimientosValidos(filaSeleccionada, columnaSeleccionada);
             }
-            JOptionPane.showMessageDialog(this, "Modos cancelados.", "Cancelar", JOptionPane.INFORMATION_MESSAGE);
+            showInfo("Modos cancelados.", "Cancelar");
             repaint();
         });
         accionesPanel.add(btnCancelar, gbc);
+        gbc.gridy++;
+
+        JButton btnRendirse = new JButton("Rendirse");
+        btnRendirse.addActionListener(e -> {
+            if (gameOver) {
+                showInfo("La partida ya terminó.", "Rendirse");
+                return;
+            }
+            Player perdedor = turnoActual.equals("Blanco") ? jugadorBlanco : jugadorNegro;
+            Player ganador = turnoActual.equals("Blanco") ? jugadorNegro : jugadorBlanco;
+            handleVictory(ganador, perdedor, "rendición");
+        });
+        accionesPanel.add(btnRendirse, gbc);
         gbc.gridy++;
 
         accionesPanel.revalidate();
@@ -556,7 +1029,6 @@ class TableroPanel extends JPanel {
 
         int tableroWidth = columnas * tamañoCelda;
         int tableroHeight = filas * tamañoCelda;
-
         int startX = (getWidth() - tableroWidth) / 2;
         int startY = (getHeight() - tableroHeight) / 2;
 
@@ -577,9 +1049,14 @@ class TableroPanel extends JPanel {
 
                 for (Point p : ataquesValidos) {
                     if (p.x == fila && p.y == col) {
-                        g2.setColor(new Color(255, 0, 0, 100));
+                        g2.setColor(new Color(255, 0, 0, 130));
                         g2.fillRect(x, y, tamañoCelda, tamañoCelda);
                     }
+                }
+
+                if (posiblesPostCaptura[fila][col]) {
+                    g2.setColor(new Color(0, 120, 255, 80));
+                    g2.fillRect(x, y, tamañoCelda, tamañoCelda);
                 }
 
                 if (fila == filaSeleccionada && col == columnaSeleccionada) {
@@ -592,18 +1069,14 @@ class TableroPanel extends JPanel {
                 g2.drawRect(x, y, tamañoCelda, tamañoCelda);
 
                 if (fichas[fila][col] != null) {
-                    g2.drawImage(
-                            fichas[fila][col],
-                            x + 10,
-                            y + 10,
-                            tamañoCelda - 20,
-                            tamañoCelda - 20,
-                            this
-                    );
+                    g2.drawImage(fichas[fila][col], x + 10, y + 10, tamañoCelda - 20, tamañoCelda - 20, this);
                 } else {
                     Pieza p = tableroLogico[fila][col];
-                    if (p != null && imgZombie != null && p.getTipo().equals("Zombie")) {
-                        g2.drawImage(imgZombie, x + 10, y + 10, tamañoCelda - 20, tamañoCelda - 20, this);
+                    if (p != null && "Zombie".equals(p.getTipo())) {
+                        Image img = p.getColor().equals("Blanco") ? imgZombieBlanco : imgZombieNegro;
+                        if (img != null) {
+                            g2.drawImage(img, x + 10, y + 10, tamañoCelda - 20, tamañoCelda - 20, this);
+                        }
                     }
                 }
             }
@@ -613,5 +1086,140 @@ class TableroPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
         return new Dimension(columnas * tamañoCelda, filas * tamañoCelda);
+    }
+
+    private List<Point> getAdjacentZombiesOfColor(int fila, int col, String color) {
+        List<Point> zombies = new ArrayList<>();
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0) {
+                    continue;
+                }
+                int nr = fila + dr, nc = col + dc;
+                if (!inBounds(nr, nc)) {
+                    continue;
+                }
+                Pieza p = tableroLogico[nr][nc];
+                if (p != null && "Zombie".equals(p.getTipo()) && color.equals(p.getColor())) {
+                    zombies.add(new Point(nr, nc));
+                }
+            }
+        }
+        return zombies;
+    }
+
+    private List<Point> computeTargetsForZombieOrder(String colorOrigen) {
+        List<Point> targets = new ArrayList<>();
+        for (int r = 0; r < filas; r++) {
+            for (int c = 0; c < columnas; c++) {
+                Pieza objetivo = tableroLogico[r][c];
+                if (objetivo == null) {
+                    continue;
+                }
+                if (colorOrigen != null && colorOrigen.equals(objetivo.getColor())) {
+                    continue;
+                }
+                if (!getAdjacentZombiesOfColor(r, c, colorOrigen).isEmpty()) {
+                    targets.add(new Point(r, c));
+                }
+            }
+        }
+        return targets;
+    }
+
+    private int contarPiezasRecursivoUp(int fila, int col, String color) {
+        if (fila >= filas) {
+            return 0;
+        }
+        int siguienteFila = fila;
+        int siguienteCol = col + 1;
+        if (siguienteCol >= columnas) {
+            siguienteCol = 0;
+            siguienteFila = fila + 1;
+        }
+        int cuenta = 0;
+        Pieza p = tableroLogico[fila][col];
+        if (p != null && color != null && color.equals(p.getColor())) {
+            cuenta = 1;
+        }
+        return cuenta + contarPiezasRecursivoUp(siguienteFila, siguienteCol, color);
+    }
+
+    private boolean caminoLibreRecursivo(int filaOrigen, int colOrigen, int filaDestino, int colDestino) {
+        if (!inBounds(filaOrigen, colOrigen) || !inBounds(filaDestino, colDestino)) {
+            return false;
+        }
+        if (filaOrigen == filaDestino && colOrigen == colDestino) {
+            return true;
+        }
+        if (filaOrigen != filaDestino && colOrigen != colDestino) {
+            return false;
+        }
+        int stepFila = Integer.compare(filaDestino, filaOrigen);
+        int stepCol = Integer.compare(colDestino, colOrigen);
+        int nf = filaOrigen + stepFila;
+        int nc = colOrigen + stepCol;
+        return caminoLibreRecursivoPaso(nf, nc, filaDestino, colDestino, stepFila, stepCol);
+    }
+
+    private boolean caminoLibreRecursivoPaso(int filaActual, int colActual, int filaDestino, int colDestino, int stepFila, int stepCol) {
+        if (filaActual == filaDestino && colActual == colDestino) {
+            return true;
+        }
+        if (!inBounds(filaActual, colActual)) {
+            return false;
+        }
+        if (tableroLogico[filaActual][colActual] != null) {
+            return false;
+        }
+        int siguienteFila = filaActual + stepFila;
+        int siguienteCol = colActual + stepCol;
+        if (siguienteFila == filaDestino && siguienteCol == colDestino) {
+            return true;
+        }
+        return caminoLibreRecursivoPaso(siguienteFila, siguienteCol, filaDestino, colDestino, stepFila, stepCol);
+    }
+
+    private void mostrarResumenAtaque(Pieza objetivo, int filaObj, int colObj) {
+        boolean destruido = (filaObj >= 0 && colObj >= 0 && tableroLogico[filaObj][colObj] == null);
+        if (destruido) {
+            String tipo = objetivo != null ? objetivo.getTipo() : "pieza";
+            String color = objetivo != null ? objetivo.getColor() : "";
+            showInfo("SE DESTRUYÓ LA PIEZA " + tipo + (color.isEmpty() ? "" : " (" + color + ")") + ".", "Resultado del ataque");
+            return;
+        }
+        if (objetivo == null) {
+            return;
+        }
+        int piezasRestantes = contarPiezas(objetivo.getColor());
+        String msg = "Resultado del ataque:\n" + objetivo.getTipo() + " (" + objetivo.getColor() + ")\n"
+                + "Vida: " + objetivo.getVida() + "\n"
+                + "Escudo: " + objetivo.getEscudo() + "\n"
+                + "Piezas restantes para " + objetivo.getColor() + ": " + piezasRestantes;
+        showInfo(msg, "Resultado del ataque");
+    }
+
+    private String normalizarTipo(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim().toLowerCase().replaceAll("[\\s_\\-]", "");
+        if (t.equals("wolf") || t.equals("lobo")) {
+            return "hombrelobo";
+        }
+        if (t.equals("vampire") || t.equals("vampiro")) {
+            return "vampiro";
+        }
+        if (t.equals("death") || t.equals("muerte")) {
+            return "muerte";
+        }
+        if (t.equals("zombie")) { 
+            return "zombie";
+        }
+        return t;
+    }
+
+    private void showInfo(String msg, String title) {
+        JOptionPane.showMessageDialog(null, msg, title, JOptionPane.INFORMATION_MESSAGE);
     }
 }

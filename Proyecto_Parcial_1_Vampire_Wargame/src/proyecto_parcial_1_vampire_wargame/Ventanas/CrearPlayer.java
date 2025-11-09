@@ -65,7 +65,7 @@ public class CrearPlayer extends JFrame {
         txtPassword.setBackground(new Color(40, 40, 60));
         txtPassword.setForeground(Color.WHITE);
         txtPassword.setFont(new Font("Arial", Font.PLAIN, 20));
-        txtPassword.setEchoChar('•'); // carácter de máscara por defecto
+        txtPassword.setEchoChar('•');
         panelPrincipal.add(txtPassword, gbc);
 
         gbc.gridx = 1;
@@ -92,7 +92,7 @@ public class CrearPlayer extends JFrame {
         panelPrincipal.add(lblInfo, gbc);
 
         gbc.gridy = 5;
-        JLabel lblEj = new JLabel("Ejemplo: Pass@12345");
+        JLabel lblEj = new JLabel("Ejemplo: Pas!1");
         lblEj.setForeground(new Color(100, 220, 100));
         lblEj.setFont(new Font("Arial", Font.ITALIC, 17));
         panelPrincipal.add(lblEj, gbc);
@@ -106,10 +106,17 @@ public class CrearPlayer extends JFrame {
             if (!validarUsername(user)) {
                 JOptionPane.showMessageDialog(this, "Usuario no válido o ya existe", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (!validarPassword(password)) {
-                JOptionPane.showMessageDialog(this, "Contraseña: mínimo 5 caracteres y al menos un símbolo especial.\nEjemplo: Pass@123", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "La contraseña debe tener:\n"
+                        + "- Exactamente 5 caracteres\n"
+                        + "- Al menos una mayúscula\n"
+                        + "- Al menos un número\n"
+                        + "- Al menos un símbolo especial",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+
             } else {
                 Player player = new Player(user, password);
-                Manager.getInstance().agregarPlayer(player); // <-- usar el Manager como fuente única
+                Manager.getInstance().agregarPlayer(player);
                 JOptionPane.showMessageDialog(this, "Cuenta creada exitosamente");
                 new MenuPrincipal(player).setVisible(true);
                 this.dispose();
@@ -132,19 +139,32 @@ public class CrearPlayer extends JFrame {
         repaint();
     }
 
-    // Validar que el username tenga longitud mínima y no exista un player activo con ese nombre
     private boolean validarUsername(String username) {
-        if (username == null) return false;
+        if (username == null) {
+            return false;
+        }
         username = username.trim();
-        if (username.isEmpty() || username.length() < 3) return false;
+        if (username.isEmpty() || username.length() < 3) {
+            return false;
+        }
 
-        // Usamos getPlayer: si retorna no-nulo significa que ya existe un player activo con ese username
         return Manager.getInstance().getPlayer(username) == null;
     }
 
     private boolean validarPassword(String password) {
-        return password.length() >= 5 &&
-               password.matches(".*[!@#$%^&*()_+=\\-\\[\\]{};':\"\\\\|,.<>?].*");
+        if (password == null) {
+            return false;
+        }
+
+        if (password.length() != 5) {
+            return false;
+        }
+
+        boolean tieneMayuscula = password.matches(".*[A-Z].*");
+        boolean tieneNumero = password.matches(".*\\d.*");
+        boolean tieneSimbolo = password.matches(".*[!@#$%^&*()_+=\\-\\[\\]{};':\"\\\\|,.<>?].*");
+
+        return tieneMayuscula && tieneNumero && tieneSimbolo;
     }
 
     private JButton crearBoton(String texto) {
@@ -162,6 +182,7 @@ public class CrearPlayer extends JFrame {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btn.setBackground(new Color(140, 50, 50));
             }
+
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 btn.setBackground(new Color(82, 36, 36));

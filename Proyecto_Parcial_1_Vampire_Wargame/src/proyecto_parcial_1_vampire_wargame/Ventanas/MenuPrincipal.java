@@ -45,7 +45,6 @@ public class MenuPrincipal extends JFrame {
             Manager m = Manager.getInstance();
             List<Player> activos = m.getAllPlayers();
 
-            // excluir al jugador actual
             List<Player> oponentes = new ArrayList<>();
             for (Player p : activos) {
                 if (!p.getUsername().equals(playerActual.getUsername())) {
@@ -53,7 +52,6 @@ public class MenuPrincipal extends JFrame {
                 }
             }
 
-            // validar cantidad
             if (oponentes.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
                         "No hay oponentes activos.\nDebe haber al menos dos jugadores activos para iniciar una partida.",
@@ -62,13 +60,11 @@ public class MenuPrincipal extends JFrame {
                 return;
             }
 
-            // construir lista de nombres
             String[] opciones = new String[oponentes.size()];
             for (int i = 0; i < oponentes.size(); i++) {
                 opciones[i] = oponentes.get(i).getUsername();
             }
 
-            // diálogo para elegir oponente
             String seleccionado = (String) JOptionPane.showInputDialog(
                     this,
                     "Selecciona el oponente:",
@@ -98,7 +94,10 @@ public class MenuPrincipal extends JFrame {
         panelPrincipal.add(btnJugar, gbc);
 
         JButton btnPerfil = crearBoton("MI PERFIL", 400, 80);
-        btnPerfil.addActionListener(e -> new MiPerfil().setVisible(true));
+        btnPerfil.addActionListener(e -> {
+            new MiPerfil(playerActual).setVisible(true);
+            dispose();
+        });
         gbc.gridx = 1;
         gbc.gridy = 1;
         panelPrincipal.add(btnPerfil, gbc);

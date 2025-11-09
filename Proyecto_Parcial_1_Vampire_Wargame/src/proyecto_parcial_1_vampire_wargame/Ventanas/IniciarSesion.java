@@ -98,7 +98,6 @@ public class IniciarSesion extends JFrame {
                 return;
             }
 
-            // Manager es la fuente única de verdad
             Player jugadorActual = Manager.getInstance().getPlayer(user);
             if (jugadorActual == null) {
                 JOptionPane.showMessageDialog(this, "Usuario no existe o no está activo.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -110,7 +109,6 @@ public class IniciarSesion extends JFrame {
                 return;
             }
 
-            // Login exitoso
             JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
             new MenuPrincipal(jugadorActual).setVisible(true);
             this.dispose();

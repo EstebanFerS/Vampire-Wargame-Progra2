@@ -227,7 +227,7 @@ class TableroPanel extends JPanel {
 
         if (piezasDisponibles == 0) {
             if (ruleta != null && ruleta.getSpinsUsed() == 1) {
-                showInfo("La ruleta salió '" + ficha + "' pero no tienes piezas de ese tipo.\nPuedes volver a girar una vez (aplica solo al primer giro).",
+                showInfo("La ruleta salió '" + ficha + "' pero no tienes piezas de ese tipo.\nPuedes volver a girar una vez",
                         "Ruleta - re-giro permitido");
                 ruleta.enableSpinButton(true);
                 ruleta.setSelectedPieceLabel(null);

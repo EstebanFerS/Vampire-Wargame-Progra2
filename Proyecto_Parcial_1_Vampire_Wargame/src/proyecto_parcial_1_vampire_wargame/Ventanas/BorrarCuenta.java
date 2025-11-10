@@ -24,6 +24,7 @@ public class BorrarCuenta extends JFrame {
         setSize(1300, 850);
         setLocationRelativeTo(null);
         setResizable(false);
+        setUndecorated(true);
         inicializarUI();
     }
 

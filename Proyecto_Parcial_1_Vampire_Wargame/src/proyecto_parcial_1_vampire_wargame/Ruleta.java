@@ -109,7 +109,6 @@ public final class Ruleta extends JPanel {
             updateButtonState();
             return;
         }
-        // consume el giro aqui para mantener consistencia
         spinsUsed++;
         actualizarLabels();
         girarAleatorio();
@@ -158,12 +157,10 @@ public final class Ruleta extends JPanel {
         lblResultado.setText("Salió: " + ficha);
         setSelectedPieceLabel(ficha);
 
-        // Notificar al listener en EDT
         if (listener != null) {
             SwingUtilities.invokeLater(() -> listener.onResult(ficha));
         }
 
-        // actualizar estado del boton segun giros restantes
         updateButtonState();
     }
 

@@ -19,6 +19,7 @@ public class Inicio extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
+        setUndecorated(true);
 
         JPanel panelPrincipal = new JPanel(new GridBagLayout());
         panelPrincipal.setOpaque(false);

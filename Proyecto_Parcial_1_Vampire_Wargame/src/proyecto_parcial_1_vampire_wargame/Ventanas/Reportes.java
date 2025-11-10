@@ -12,11 +12,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Reportes con estética consistente con MiPerfil.
- * Ventana: 1300x850 (como pediste).
- * Tablas con mayor legibilidad: fuente más grande, filas más altas, descripción con wrap.
- */
 public class Reportes extends JFrame {
 
     private final Player jugador;
@@ -27,9 +22,10 @@ public class Reportes extends JFrame {
         this.manager = manager;
         setTitle("Reportes - Vampire Wargame");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1300, 850); // <- tamaño pedido
+        setSize(1300, 850);
         setLocationRelativeTo(null);
         setResizable(false);
+        setUndecorated(true);
         inicializar();
         setVisible(true);
     }
@@ -128,12 +124,11 @@ public class Reportes extends JFrame {
         aplicarEstiloTablaRanking(tabla);
 
         TableColumnModel colModel = tabla.getColumnModel();
-        colModel.getColumn(0).setPreferredWidth(90);   // Posición
-        colModel.getColumn(1).setPreferredWidth(420);  // Jugador
-        colModel.getColumn(2).setPreferredWidth(140);  // Puntos
-        colModel.getColumn(3).setPreferredWidth(240);  // Fecha ingreso
+        colModel.getColumn(0).setPreferredWidth(90);
+        colModel.getColumn(1).setPreferredWidth(420);        
+        colModel.getColumn(2).setPreferredWidth(140);
+        colModel.getColumn(3).setPreferredWidth(240); 
 
-        // renderer para colorear filas (oro/plata/bronce)
         tabla.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             private final Color oro = new Color(212, 175, 55);
             private final Color plata = new Color(192, 192, 192);
@@ -214,22 +209,19 @@ public class Reportes extends JFrame {
         };
         JTable tabla = new JTable(model);
 
-        // Mejor legibilidad para logs:
-        tabla.setRowHeight(50); // fila base elevada
+        tabla.setRowHeight(50);
         tabla.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 16));
         tabla.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         TableColumnModel cm = tabla.getColumnModel();
-        cm.getColumn(0).setPreferredWidth(600); // Descripción más ancha (legible)
-        cm.getColumn(1).setPreferredWidth(200); // Fecha
-        cm.getColumn(2).setPreferredWidth(260); // Oponente
-        cm.getColumn(3).setPreferredWidth(140); // Resultado
+        cm.getColumn(0).setPreferredWidth(600);
+        cm.getColumn(1).setPreferredWidth(200);
+        cm.getColumn(2).setPreferredWidth(260);
+        cm.getColumn(3).setPreferredWidth(140);
 
-        // renderer de texto multilinea para la columna Descripción (col 0)
         cm.getColumn(0).setCellRenderer(new TextAreaRenderer());
 
-        // Alineación centro para otras columnas
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         cm.getColumn(1).setCellRenderer(centerRenderer);
@@ -240,7 +232,6 @@ public class Reportes extends JFrame {
         tabla.setSelectionForeground(Color.BLACK);
         tabla.setShowGrid(false);
 
-        // ajustar altura de filas según contenido de descripción
         ajustarAlturaFilasPorContenido(tabla);
 
         JScrollPane scroll = new JScrollPane(tabla);
@@ -250,7 +241,6 @@ public class Reportes extends JFrame {
         return p;
     }
 
-    // renderer que usa JTextArea para permitir wrap y varias líneas
     private static class TextAreaRenderer extends JTextArea implements TableCellRenderer {
         public TextAreaRenderer() {
             setLineWrap(true);

@@ -536,12 +536,14 @@ class TableroPanel extends JPanel {
     private void calcularMovimientosValidos(int fila, int col) {
         movimientosValidos.clear();
         Pieza p = tableroLogico[fila][col];
-        if (p != null && "Zombie".equals(p.getTipo())) {
+        if (p == null) {
             return;
         }
-        boolean puedeMover2 = (p != null && p.moverDosCasillas() && modoMover2Activo);
+        if ("Zombie".equals(p.getTipo())) {
+            return;
+        }
 
-        if (puedeMover2) {
+        if (p.moverDosCasillas() && modoMover2Activo) {
             int[][] deltas2 = {
                 {-2, 0}, {2, 0}, {0, -2}, {0, 2},
                 {-2, -2}, {-2, 2}, {2, -2}, {2, 2}
@@ -552,18 +554,43 @@ class TableroPanel extends JPanel {
                     movimientosValidos.add(new Point(nf, nc));
                 }
             }
-        } else {
-            int rango = 1;
-            for (int df = -rango; df <= rango; df++) {
-                for (int dc = -rango; dc <= rango; dc++) {
-                    if (df == 0 && dc == 0) {
-                        continue;
-                    }
-                    int nf = fila + df, nc = col + dc;
-                    if (inBounds(nf, nc) && fichas[nf][nc] == null) {
-                        movimientosValidos.add(new Point(nf, nc));
-                    }
+            return;
+        }
+
+        int rango = 1;
+        boolean[][] visited = new boolean[filas][columnas];
+        visited[fila][col] = true;
+        calcularMovimientos(fila, col, rango, visited, movimientosValidos);
+    }
+
+    //Recursiva Down
+    private void calcularMovimientos(int r, int c, int pasosRestantes, boolean[][] visited, List<Point> salida) {
+        if (pasosRestantes <= 0) {
+            return;
+        }
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0) {
+                    continue;
                 }
+                int nr = r + dr;
+                int nc = c + dc;
+
+                if (!inBounds(nr, nc)) {
+                    continue;
+                }
+                if (visited[nr][nc]) {
+                    continue;
+                }
+
+                if (fichas[nr][nc] != null) {
+                    visited[nr][nc] = true;
+                    continue;
+                }
+
+                salida.add(new Point(nr, nc));
+                visited[nr][nc] = true;
+                calcularMovimientos(nr, nc, pasosRestantes - 1, visited, salida);
             }
         }
     }
@@ -821,8 +848,8 @@ class TableroPanel extends JPanel {
             return;
         }
 
-        int blancas = contarPiezasRecursivoUp(0, 0, "Blanco");
-        int negras = contarPiezasRecursivoUp(0, 0, "Negro");
+        int blancas = contarPiezas(0, 0, "Blanco");
+        int negras = contarPiezas(0, 0, "Negro");
 
         if (negras == 0) {
             handleVictory(jugadorBlanco, jugadorNegro, "eliminación");
@@ -845,20 +872,42 @@ class TableroPanel extends JPanel {
         gameOver = true;
 
         String nombreGanador = ganador != null ? ganador.getUsername() : "Desconocido";
+        String nombrePerdedor = perdedor != null ? perdedor.getUsername() : "Desconocido";
+
         if (ganador != null) {
-            ganador.agregarPuntos(3);
-        }
-        if (perdedor != null) try {
-            perdedor.agregarPuntos(0);
-        } catch (Exception ignored) {
+            try {
+                ganador.agregarPuntos(3);
+            } catch (Exception ignored) {
+            }
         }
 
         try {
+            proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager mgr = proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager.getInstance();
             if (ganador != null) {
-                proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager.getInstance().actualizarPlayer(ganador);
+                mgr.actualizarPlayer(ganador);
             }
+            if (perdedor != null) {
+                mgr.actualizarPlayer(perdedor);
+            }
+
+            String resultadoTexto;
+            if (motivo != null && motivo.toLowerCase().contains("rend")) {
+                resultadoTexto = nombreGanador + " venció por rendición a " + nombrePerdedor;
+            } else if (motivo != null && motivo.toLowerCase().contains("elimin")) {
+                resultadoTexto = nombreGanador + " venció por eliminación de todas las piezas a " + nombrePerdedor;
+            } else {
+                resultadoTexto = nombreGanador + " venció a " + nombrePerdedor + " (" + motivo + ")";
+            }
+
+            proyecto_parcial_1_vampire_wargame.GameLog log = new proyecto_parcial_1_vampire_wargame.GameLog(
+                    nombreGanador.equals("Desconocido") ? null : nombreGanador,
+                    nombrePerdedor.equals("Desconocido") ? null : nombrePerdedor,
+                    resultadoTexto
+            );
+
+            mgr.agregarLog(log);
         } catch (Exception ex) {
-            System.err.println("Warning: no se pudo actualizar Manager: " + ex.getMessage());
+            System.err.println("Warning: no se pudo guardar o actualizar en Manager: " + ex.getMessage());
         }
 
         showInfo("Victoria de " + nombreGanador + " por " + motivo + ".\n\n" + nombreGanador + " recibió 3 puntos.", "Partida finalizada");
@@ -877,12 +926,14 @@ class TableroPanel extends JPanel {
             System.err.println("No se pudo cerrar la ventana del tablero: " + ex.getMessage());
         }
 
-        if (jugadorBlanco != null) {
-            try {
+        try {
+            if (jugadorBlanco != null) {
                 new proyecto_parcial_1_vampire_wargame.Ventanas.MenuPrincipal(jugadorBlanco).setVisible(true);
-            } catch (Exception ex) {
-                System.err.println("Error al abrir MenuPrincipal: " + ex.getMessage());
+            } else if (jugadorNegro != null) {
+                new proyecto_parcial_1_vampire_wargame.Ventanas.MenuPrincipal(jugadorNegro).setVisible(true);
             }
+        } catch (Exception ex) {
+            System.err.println("Error al abrir MenuPrincipal: " + ex.getMessage());
         }
     }
 
@@ -1161,7 +1212,8 @@ class TableroPanel extends JPanel {
         return targets;
     }
 
-    private int contarPiezasRecursivoUp(int fila, int col, String color) {
+    //Recursiva Up
+    private int contarPiezas(int fila, int col, String color) {
         if (fila >= filas) {
             return 0;
         }
@@ -1176,42 +1228,7 @@ class TableroPanel extends JPanel {
         if (p != null && color != null && color.equals(p.getColor())) {
             cuenta = 1;
         }
-        return cuenta + contarPiezasRecursivoUp(siguienteFila, siguienteCol, color);
-    }
-
-    private boolean caminoLibreRecursivo(int filaOrigen, int colOrigen, int filaDestino, int colDestino) {
-        if (!inBounds(filaOrigen, colOrigen) || !inBounds(filaDestino, colDestino)) {
-            return false;
-        }
-        if (filaOrigen == filaDestino && colOrigen == colDestino) {
-            return true;
-        }
-        if (filaOrigen != filaDestino && colOrigen != colDestino) {
-            return false;
-        }
-        int stepFila = Integer.compare(filaDestino, filaOrigen);
-        int stepCol = Integer.compare(colDestino, colOrigen);
-        int nf = filaOrigen + stepFila;
-        int nc = colOrigen + stepCol;
-        return caminoLibreRecursivoPaso(nf, nc, filaDestino, colDestino, stepFila, stepCol);
-    }
-
-    private boolean caminoLibreRecursivoPaso(int filaActual, int colActual, int filaDestino, int colDestino, int stepFila, int stepCol) {
-        if (filaActual == filaDestino && colActual == colDestino) {
-            return true;
-        }
-        if (!inBounds(filaActual, colActual)) {
-            return false;
-        }
-        if (tableroLogico[filaActual][colActual] != null) {
-            return false;
-        }
-        int siguienteFila = filaActual + stepFila;
-        int siguienteCol = colActual + stepCol;
-        if (siguienteFila == filaDestino && siguienteCol == colDestino) {
-            return true;
-        }
-        return caminoLibreRecursivoPaso(siguienteFila, siguienteCol, filaDestino, colDestino, stepFila, stepCol);
+        return cuenta + contarPiezas(siguienteFila, siguienteCol, color);
     }
 
     private void mostrarResumenAtaque(Pieza objetivo, int filaObj, int colObj) {

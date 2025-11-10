@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package proyecto_parcial_1_vampire_wargame.Almacenamiento;
+
 import java.util.ArrayList;
 import java.util.List;
 import proyecto_parcial_1_vampire_wargame.GameLog;
@@ -29,7 +30,7 @@ public class Manager implements Almacenamiento {
         }
         return instance;
     }
-    
+
     public boolean playerHabilitado(String username) {
         if (username == null) {
             return false;
@@ -113,13 +114,24 @@ public class Manager implements Almacenamiento {
     public List<GameLog> getAllLogs(String username) {
         List<GameLog> resultado = new ArrayList<>();
         if (username == null) {
+            for (int i = logs.size() - 1; i >= 0; i--) {
+                resultado.add(logs.get(i));
+            }
             return resultado;
         }
-        for (GameLog log : logs) {
-            if (log.getGanador().equalsIgnoreCase(username) || log.getPerdedor().equalsIgnoreCase(username)) {
-                resultado.add(0, log);
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            GameLog log = logs.get(i);
+            if (log == null) {
+                continue;
+            }
+            String g = log.getGanador();
+            String p = log.getPerdedor();
+            boolean participa = (g != null && g.equalsIgnoreCase(username)) || (p != null && p.equalsIgnoreCase(username));
+            if (participa) {
+                resultado.add(log);
             }
         }
         return resultado;
     }
+
 }

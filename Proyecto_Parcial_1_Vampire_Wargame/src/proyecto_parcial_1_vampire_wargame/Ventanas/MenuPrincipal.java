@@ -103,6 +103,11 @@ public class MenuPrincipal extends JFrame {
         panelPrincipal.add(btnPerfil, gbc);
 
         JButton btnReportes = crearBoton("REPORTES", 400, 80);
+        btnReportes.addActionListener(e -> {
+            Manager m = Manager.getInstance();
+            new Reportes(playerActual, m);
+            dispose();
+        });
         gbc.gridx = 0;
         gbc.gridy = 2;
         panelPrincipal.add(btnReportes, gbc);

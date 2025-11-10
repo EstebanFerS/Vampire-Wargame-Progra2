@@ -28,12 +28,11 @@ public class Vampiro extends Pieza {
     }
 
     public String chuparSangre(Pieza objetivo) {
-        if (objetivo == null) return "No hay objetivo para chupar sangre.";
+    if (objetivo == null) return "No hay objetivo para chupar sangre.";
+    objetivo.recibirDanioSinEscudo(this.ataque);
+    this.vida += this.ataque;
+    return "Vampiro chupa sangre a " + objetivo.getTipo()
+         + ": -" + this.ataque + " vida al objetivo, +" + this.ataque + " vida al vampiro";
+}
 
-        objetivo.recibirDanio(1);
-        this.vida += 1;
-
-        return "Vampiro chupa sangre a " + objetivo.getTipo()
-             + ": -1 al objetivo, +1 vida al vampiro";
-    }
 }

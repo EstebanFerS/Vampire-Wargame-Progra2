@@ -18,6 +18,7 @@ import proyecto_parcial_1_vampire_wargame.Fichas.Muerte;
 import proyecto_parcial_1_vampire_wargame.Fichas.Zombie;
 import proyecto_parcial_1_vampire_wargame.Player;
 import proyecto_parcial_1_vampire_wargame.Ruleta;
+import java.awt.Point;
 
 public class Tablero extends JFrame {
 
@@ -88,7 +89,6 @@ class TableroPanel extends JPanel {
     private static final int CHUPAR = 2;
     private static final int LANZA = 3;
     private static final int CONJURAR_ZOMBIE = 4;
-    private static final int MOVER_DOS = 5;
     private static final int ORDER_ZOMBIES = 6;
 
     private int modoActual = NONE;
@@ -99,6 +99,8 @@ class TableroPanel extends JPanel {
     private final Player jugadorNegro;
 
     private Ruleta ruleta;
+    private JPanel ruletaPanelContenedor;
+    private JLabel etiquetaTurno;
 
     private String selectedPieceType = null;
     private String selectedPieceTypeKey = null;
@@ -182,10 +184,20 @@ class TableroPanel extends JPanel {
         ruleta.setPreferredSize(new Dimension(220, 260));
         ruleta.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
         ruleta.setResultListener(ficha -> SwingUtilities.invokeLater(() -> manejarResultadoRuleta(ficha)));
+
+        etiquetaTurno = new JLabel("", SwingConstants.CENTER);
+        etiquetaTurno.setFont(new Font("Arial", Font.BOLD, 18));
+        etiquetaTurno.setForeground(Color.WHITE);
+        etiquetaTurno.setPreferredSize(new Dimension(220, 36));
+
+        ruletaPanelContenedor = new JPanel(new BorderLayout());
+        ruletaPanelContenedor.setOpaque(false);
+        ruletaPanelContenedor.add(etiquetaTurno, BorderLayout.NORTH);
+        ruletaPanelContenedor.add(ruleta, BorderLayout.CENTER);
     }
 
     public JPanel getRuletaPanel() {
-        return ruleta;
+        return ruletaPanelContenedor != null ? ruletaPanelContenedor : new JPanel();
     }
 
     private void manejarResultadoRuleta(String ficha) {
@@ -193,7 +205,24 @@ class TableroPanel extends JPanel {
             return;
         }
 
-        String fichaKey = normalizarTipo(ficha);
+        String fichaKey;
+        if (ficha == null) {
+            fichaKey = null;
+        } else {
+            String f = ficha.trim().toLowerCase();
+            if (f.equals("hombre lobo") || f.equals("hombrelobo")) {
+                fichaKey = "hombrelobo";
+            } else if (f.equals("vampiro")) {
+                fichaKey = "vampiro";
+            } else if (f.equals("muerte")) {
+                fichaKey = "muerte";
+            } else if (f.equals("zombie")) {
+                fichaKey = "zombie";
+            } else {
+                fichaKey = f.replaceAll("\\s+", "");
+            }
+        }
+
         int piezasDisponibles = contarPiezasTipo(turnoActual, fichaKey);
 
         if (piezasDisponibles == 0) {
@@ -230,7 +259,7 @@ class TableroPanel extends JPanel {
             }
         }
 
-        mostrarMensajeAcciones("Turno: " + turnoActual + ". Puedes mover solo fichas tipo: " + ficha + " (" + turnoActual + ").");
+        mostrarMensajeAcciones("Puedes mover solo fichas tipo: " + ficha + " (" + turnoActual + ").");
     }
 
     private void inicioTurno() {
@@ -250,7 +279,14 @@ class TableroPanel extends JPanel {
         selectedPieceType = null;
         selectedPieceTypeKey = null;
 
-        mostrarMensajeAcciones("Turno: " + turnoActual + ". Debes girar la ruleta (" + spinsAllowed + " giro(s) permitido(s)) y seleccionar la ficha indicada.");
+        String usernameTurno = turnoActual.equals("Blanco") && jugadorBlanco != null
+                ? jugadorBlanco.getUsername()
+                : (turnoActual.equals("Negro") && jugadorNegro != null ? jugadorNegro.getUsername() : turnoActual);
+        if (etiquetaTurno != null) {
+            etiquetaTurno.setText("Turno: " + usernameTurno);
+        }
+
+        mostrarMensajeAcciones("Debes girar la ruleta (" + spinsAllowed + " giro(s) permitido(s)) y seleccionar la ficha indicada.");
         repaint();
     }
 
@@ -273,7 +309,10 @@ class TableroPanel extends JPanel {
             for (int c = 0; c < columnas; c++) {
                 Pieza p = tableroLogico[r][c];
                 if (p != null && color.equals(p.getColor())) {
-                    cnt++;
+                    String tipo = p.getTipo() == null ? "" : p.getTipo().replaceAll("\\s+", "").toLowerCase();
+                    if (!"zombie".equals(tipo)) {
+                        cnt++;
+                    }
                 }
             }
         }
@@ -284,12 +323,16 @@ class TableroPanel extends JPanel {
         if (tipoKey == null) {
             return 0;
         }
+        String keyNorm = tipoKey.replaceAll("\\s+", "").toLowerCase();
         int cnt = 0;
         for (int r = 0; r < filas; r++) {
             for (int c = 0; c < columnas; c++) {
                 Pieza p = tableroLogico[r][c];
-                if (p != null && color.equals(p.getColor()) && tipoKey.equals(normalizarTipo(p.getTipo()))) {
-                    cnt++;
+                if (p != null && color.equals(p.getColor())) {
+                    String tipoP = p.getTipo() == null ? "" : p.getTipo().replaceAll("\\s+", "").toLowerCase();
+                    if (tipoP.equals(keyNorm)) {
+                        cnt++;
+                    }
                 }
             }
         }
@@ -414,8 +457,8 @@ class TableroPanel extends JPanel {
                     showInfo("No puedes seleccionar una ficha del oponente.", "Selección");
                     return;
                 }
-                String tipoFichaEnTableroKey = normalizarTipo(piezaEnCasilla.getTipo());
-                if (!selectedPieceTypeKey.equals(tipoFichaEnTableroKey)) {
+                String tipoFichaEnTableroKey = piezaEnCasilla.getTipo() == null ? "" : piezaEnCasilla.getTipo().replaceAll("\\s+", "").toLowerCase();
+                if (!selectedPieceTypeKey.replaceAll("\\s+", "").toLowerCase().equals(tipoFichaEnTableroKey)) {
                     showInfo("Solo puedes seleccionar fichas tipo: " + selectedPieceType, "Selección");
                     return;
                 }
@@ -493,6 +536,9 @@ class TableroPanel extends JPanel {
     private void calcularMovimientosValidos(int fila, int col) {
         movimientosValidos.clear();
         Pieza p = tableroLogico[fila][col];
+        if (p != null && "Zombie".equals(p.getTipo())) {
+            return;
+        }
         boolean puedeMover2 = (p != null && p.moverDosCasillas() && modoMover2Activo);
 
         if (puedeMover2) {
@@ -641,7 +687,6 @@ class TableroPanel extends JPanel {
             return false;
         }
         if (Math.abs(df - of) <= 1 && Math.abs(dc - oc) <= 1 && !(df == of && dc == oc)) {
-            objetivo.recibirDanio(1);
             ((Vampiro) origen).chuparSangre(objetivo);
             showInfo("Vampiro chupó sangre a " + objetivo.getTipo() + ".", "Chupar");
             boolean huboMuerte = chequearMuerteYQuitar(df, dc);
@@ -678,6 +723,7 @@ class TableroPanel extends JPanel {
         if (es1 || es2) {
             ((Muerte) origen).lanzarLanza(objetivo);
             showInfo("Muerte lanzó lanza a " + objetivo.getTipo() + ".", "Lanza");
+
             boolean huboMuerte = chequearMuerteYQuitar(df, dc);
             if (huboMuerte) {
                 resetPosiblesPostCaptura();
@@ -778,14 +824,6 @@ class TableroPanel extends JPanel {
         int blancas = contarPiezasRecursivoUp(0, 0, "Blanco");
         int negras = contarPiezasRecursivoUp(0, 0, "Negro");
 
-        if (negras == 0 && blancas == 0) {
-            showInfo("Ambos jugadores se quedaron sin piezas. Empate.", "Resultado");
-            gameOver = true;
-            if (ruleta != null) {
-                ruleta.enableSpinButton(false);
-            }
-            return;
-        }
         if (negras == 0) {
             handleVictory(jugadorBlanco, jugadorNegro, "eliminación");
         } else if (blancas == 0) {
@@ -815,17 +853,21 @@ class TableroPanel extends JPanel {
         } catch (Exception ignored) {
         }
 
-        safeActualizarManager(ganador);
+        try {
+            if (ganador != null) {
+                proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager.getInstance().actualizarPlayer(ganador);
+            }
+        } catch (Exception ex) {
+            System.err.println("Warning: no se pudo actualizar Manager: " + ex.getMessage());
+        }
+
         showInfo("Victoria de " + nombreGanador + " por " + motivo + ".\n\n" + nombreGanador + " recibió 3 puntos.", "Partida finalizada");
 
         if (ruleta != null) {
             ruleta.enableSpinButton(false);
         }
         mostrarMensajeAcciones("Partida terminada. Ganador: " + nombreGanador + ".");
-        closeThisFrameAndOpenMenu();
-    }
 
-    private void closeThisFrameAndOpenMenu() {
         try {
             Component root = SwingUtilities.getRoot(this);
             if (root instanceof JFrame) {
@@ -841,14 +883,6 @@ class TableroPanel extends JPanel {
             } catch (Exception ex) {
                 System.err.println("Error al abrir MenuPrincipal: " + ex.getMessage());
             }
-        }
-    }
-
-    private void safeActualizarManager(Player ganador) {
-        try {
-            proyecto_parcial_1_vampire_wargame.Almacenamiento.Manager.getInstance().actualizarPlayer(ganador);
-        } catch (Exception ex) {
-            System.err.println("Warning: no se pudo actualizar Manager: " + ex.getMessage());
         }
     }
 
@@ -1197,26 +1231,6 @@ class TableroPanel extends JPanel {
                 + "Escudo: " + objetivo.getEscudo() + "\n"
                 + "Piezas restantes para " + objetivo.getColor() + ": " + piezasRestantes;
         showInfo(msg, "Resultado del ataque");
-    }
-
-    private String normalizarTipo(String s) {
-        if (s == null) {
-            return null;
-        }
-        String t = s.trim().toLowerCase().replaceAll("[\\s_\\-]", "");
-        if (t.equals("wolf") || t.equals("lobo")) {
-            return "hombrelobo";
-        }
-        if (t.equals("vampire") || t.equals("vampiro")) {
-            return "vampiro";
-        }
-        if (t.equals("death") || t.equals("muerte")) {
-            return "muerte";
-        }
-        if (t.equals("zombie")) { 
-            return "zombie";
-        }
-        return t;
     }
 
     private void showInfo(String msg, String title) {

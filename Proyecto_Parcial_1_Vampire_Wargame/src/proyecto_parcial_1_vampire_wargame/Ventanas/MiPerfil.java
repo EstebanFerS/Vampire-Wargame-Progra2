@@ -119,8 +119,10 @@ public class MiPerfil extends JFrame {
 
         b.gridy++;
         JButton btnBorrar = crearBoton("BORRAR CUENTA");
-        btnBorrar.setEnabled(false);
-        btnBorrar.setToolTipText("Función no implementada aún");
+        btnBorrar.addActionListener(e -> {
+            new BorrarCuenta(jugadorActual).setVisible(true);
+            dispose();
+        });
         panelBtns.add(btnBorrar, b);
 
         b.gridy++;
